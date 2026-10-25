@@ -171,13 +171,17 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
 .ib-clock{display:flex;flex-direction:column;gap:1px;min-width:0}
 .ib-time{font-family:var(--font-display);font-weight:800;font-size:1.5rem;letter-spacing:.01em;font-variant-numeric:tabular-nums;line-height:1}
 .ib-date{font-size:.82rem;color:var(--muted);font-weight:600}
-.ib-weather{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-start}
+.ib-weather{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
 .ib-wloading{color:var(--muted);font-size:.82rem;align-self:center}
-.wx-day{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:6px 9px;min-width:52px}
+.wx-loc{font-size:.68rem;color:var(--muted);font-weight:700;letter-spacing:.02em}
+.wx-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.wx-day{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:7px 11px;min-width:56px}
+.wx-day.today{background:var(--accent-soft);border-color:var(--accent)}
 .wx-day .d{font-size:.7rem;color:var(--muted);font-weight:700}
-.wx-day .i{font-size:1.1rem;line-height:1.2}
-.wx-day .t{font-size:.76rem;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.wx-day .t .lo{color:var(--muted)}
+.wx-day.today .d{color:var(--accent)}
+.wx-day .i{font-size:1.4rem;line-height:1.1}
+.wx-day .t{font-size:.82rem;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wx-day .t .lo{color:var(--muted);font-weight:600;margin-inline-start:4px}
 
 .ac-contacts{background:linear-gradient(135deg,#273650,#223049);color:#f2f5fa;border-radius:var(--r);padding:18px;margin-bottom:20px;box-shadow:var(--shadow)}
 .ac-ch{font-family:var(--font-display);font-weight:800;font-size:1.1rem;margin-bottom:14px}
@@ -335,11 +339,15 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     <h1 class="view-title">דשבורד — סקירה כללית</h1>
     <div class="view-sub" id="dashSub">תמונת מצב של חלוקת הציוד החודש</div>
     <div class="mnav" id="dashNav"></div>
+    <div id="dashCompare" class="compare-badge"></div>
     <div class="stats">
-      <div class="tile"><div class="label">יחידות שחולקו החודש</div><div class="value" id="kUnits">0</div></div>
+      <div class="tile"><div class="label">יחידות שחולקו</div><div class="value" id="kUnits">0</div></div>
       <div class="tile"><div class="label">רשומות חלוקה</div><div class="value" id="kRecords">0</div></div>
+      <div class="tile"><div class="label">ממוצע ליום</div><div class="value" id="kAvg">0</div></div>
       <div class="tile"><div class="label">פריטים פעילים</div><div class="value" id="kItems">0</div></div>
       <div class="tile"><div class="label">מחלקות פעילות</div><div class="value" id="kDepts">0</div></div>
+      <div class="tile"><div class="label">פריט מוביל</div><div class="value" id="kTopItem">—</div></div>
+      <div class="tile"><div class="label">מחלקה מובילה</div><div class="value" id="kTopDept">—</div></div>
     </div>
     <div class="card">
       <h2>הפריטים המבוקשים ביותר</h2>
@@ -727,13 +735,29 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
   function shiftMonth(delta){var p=vMonth().split("-");var d=new Date(+p[0],(+p[1])-1+delta,1);setMonth(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));}
 
   function renderDashboard(){
-    var mRec=allRecords().filter(function(r){return recMonth(r)===vMonth();});
+    var mm=vMonth();
+    var mRec=allRecords().filter(function(r){return recMonth(r)===mm;});
     var units=mRec.reduce(function(a,r){return a+(+r.qty||0);},0);
+    var itemsSum=sumBy(mRec,function(r){return r.item;}),deptsSum=sumBy(mRec,function(r){return r.dept;});
+    var activeItems={},activeDepts={};mRec.forEach(function(r){activeItems[r.item]=1;activeDepts[r.dept]=1;});
+    // daily average over the active days in the month (or elapsed days for current month)
+    var days={};mRec.forEach(function(r){if(r.date)days[r.date]=1;});
+    var nDays=Object.keys(days).length||1;
+    var topItem=Object.keys(itemsSum).sort(function(a,b){return itemsSum[b]-itemsSum[a];})[0];
+    var topDept=Object.keys(deptsSum).sort(function(a,b){return deptsSum[b]-deptsSum[a];})[0];
     $("kUnits").textContent=nf(units); $("kRecords").textContent=nf(mRec.length);
-    $("kItems").textContent=nf(state.items.length); $("kDepts").textContent=nf(state.depts.length);
-    $("dashSub").textContent="תמונת מצב של חלוקת הציוד — "+monthLabel(vMonth());
-    $("topItems").innerHTML=barList(sumBy(mRec,function(r){return r.item;}),8);
-    $("topDepts").innerHTML=barList(sumBy(mRec,function(r){return r.dept;}),8,"var(--warm)");
+    $("kAvg").textContent=nf(Math.round(units/nDays));
+    $("kItems").textContent=nf(Object.keys(activeItems).length); $("kDepts").textContent=nf(Object.keys(activeDepts).length);
+    $("kTopItem").textContent=topItem?topItem.replace(/\s*\(יח'?\)\s*/,""):"—";
+    $("kTopDept").textContent=topDept||"—";
+    $("dashSub").textContent="תמונת מצב של חלוקת הציוד — "+monthLabel(mm);
+    // growth vs previous month
+    var prevU=allRecords().filter(function(r){return recMonth(r)===prevMonth(mm);}).reduce(function(a,r){return a+(+r.qty||0);},0);
+    var diff=units-prevU,pct=prevU>0?Math.round(diff/prevU*100):(units>0?100:0);
+    var cls=diff>0?"up":diff<0?"down":"flat",arrow=diff>0?"▲":diff<0?"▼":"■",sign=diff>0?"+":"";
+    $("dashCompare").innerHTML='<span class="cb '+cls+'">'+arrow+' '+(diff>0?"גידול":diff<0?"קיטון":"ללא שינוי")+' מול '+monthLabel(prevMonth(mm))+': '+sign+nf(diff)+' יח׳ ('+sign+pct+'%)</span>';
+    $("topItems").innerHTML=barList(itemsSum,8);
+    $("topDepts").innerHTML=barList(deptsSum,8,"var(--warm)");
   }
 
   function renderHistory(){
@@ -1080,16 +1104,16 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
   function wxDayName(iso){try{return new Date(iso+"T12:00:00").toLocaleDateString("he-IL",{weekday:"short"});}catch(e){return "";}}
   function renderWeather(d){
     var el=$("ibWeather");if(!el||!d||!d.time)return;
-    var html="";
-    for(var i=0;i<d.time.length&&i<5;i++){
+    var html='<div class="wx-loc">מענית</div><div class="wx-row">';
+    for(var i=0;i<d.time.length&&i<4;i++){
       var hi=Math.round(d.temperature_2m_max[i]),lo=Math.round(d.temperature_2m_min[i]);
-      html+='<div class="wx-day"><span class="d">'+(i===0?"היום":wxDayName(d.time[i]))+'</span><span class="i">'+(WX[d.weather_code[i]]||"•")+'</span><span class="t">'+hi+'° <span class="lo">'+lo+'°</span></span></div>';
+      html+='<div class="wx-day'+(i===0?" today":"")+'"><span class="d">'+(i===0?"היום":wxDayName(d.time[i]))+'</span><span class="i">'+(WX[d.weather_code[i]]||"•")+'</span><span class="t">'+hi+'°<span class="lo">'+lo+'°</span></span></div>';
     }
-    el.innerHTML=html;
+    el.innerHTML=html+'</div>';
   }
   (function loadWeather(){
     try{
-      fetch("https://api.open-meteo.com/v1/forecast?latitude=32.51&longitude=35.01&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FJerusalem&forecast_days=5")
+      fetch("https://api.open-meteo.com/v1/forecast?latitude=32.51&longitude=35.01&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FJerusalem&forecast_days=4")
       .then(function(r){return r.json();})
       .then(function(j){ if(j&&j.daily)renderWeather(j.daily); else throw 0; })
       .catch(function(){ var el=$("ibWeather");if(el)el.innerHTML='<span class="ib-wloading">מזג האוויר יוצג באתר המקוון 🌤️</span>'; });
