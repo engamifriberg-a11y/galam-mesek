@@ -8,6 +8,11 @@ create table if not exists air_conditioners (num text primary key, loc text, mod
 create table if not exists water_devices (serial text primary key, loc text, model text, note text);
 create table if not exists pallets (id text primary key, prices jsonb, rows jsonb);
 
+-- Grants so the public (anon) key can read AND write (internal shared tool)
+grant usage on schema public to anon, authenticated;
+grant all privileges on all tables in schema public to anon, authenticated;
+grant all privileges on all sequences in schema public to anon, authenticated;
+alter default privileges in schema public grant all on tables to anon, authenticated;
 alter table items enable row level security;
 alter table departments enable row level security;
 alter table distributors enable row level security;
