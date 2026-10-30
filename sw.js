@@ -1,4 +1,4 @@
-var CACHE="galam-v4";
+var CACHE="galam-v5";
 var CORE=["./manifest.webmanifest","./icon-192.png","./icon-512.png","./icon-512-maskable.png"];
 self.addEventListener("install",function(e){e.waitUntil((async function(){var c=await caches.open(CACHE);try{await c.addAll(CORE);}catch(_){}self.skipWaiting();})());});
 self.addEventListener("activate",function(e){e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return k!==CACHE?caches.delete(k):null;}));}).then(function(){return self.clients.claim();}));});

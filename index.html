@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#273650">
+<meta name="theme-color" content="#283a6b">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Galam">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Galam Mesek Management</title>
+<title>ניהול משק</title>
 <style>
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}html,body{margin:0}
@@ -332,6 +332,8 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     <button class="subtab" role="tab" data-tab="items" aria-selected="false">פריטים</button>
     <button class="subtab" role="tab" data-tab="depts" aria-selected="false">מחלקות</button>
     <button class="subtab" role="tab" data-tab="distributors" aria-selected="false">מחלקים</button>
+    <button class="subtab" role="tab" data-tab="distctl" aria-selected="false">בקרת מחלקים</button>
+    <button class="subtab" role="tab" data-tab="budget" aria-selected="false">תקציב</button>
     <button class="subtab" role="tab" data-tab="reports" aria-selected="false">דוחות</button>
   </div>
 
@@ -420,11 +422,12 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
         <div class="field wide"><label for="iName">שם הפריט</label><input type="text" id="iName" placeholder="למשל: חלב" required></div>
         <div class="field"><label for="iUnit">יחידת מידה</label><input type="text" id="iUnit" placeholder="יח׳ / ק״ג / ליטר" value="יח׳"></div>
         <div class="field"><label for="iStock">מלאי התחלתי</label><input type="number" id="iStock" min="0" step="1" inputmode="numeric" value="0"></div>
+        <div class="field"><label for="iCost">עלות ליח׳ (₪)</label><input type="number" id="iCost" min="0" step="0.01" inputmode="decimal" placeholder="0" value="0"></div>
         <button type="submit" class="btn block" style="grid-column:1/-1">הוסף פריט</button>
       </form>
     </div>
     <div class="table-scroll">
-      <table><thead><tr><th>פריט</th><th>יחידה</th><th>מלאי</th><th>חולק החודש</th><th></th></tr></thead>
+      <table><thead><tr><th>פריט</th><th>יחידה</th><th>מלאי</th><th>חולק החודש</th><th>עלות ₪</th><th></th></tr></thead>
       <tbody id="itemRows"></tbody></table>
     </div>
   </section>
@@ -438,7 +441,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       <select class="selbox" id="sFilter"><option value="">הכל</option><option value="low">מלאי נמוך</option><option value="out">אזל</option></select>
     </div>
     <div class="table-scroll">
-      <table><thead><tr><th>פריט</th><th>מלאי</th><th>סטטוס</th><th>עדכון מלאי נוכחי</th></tr></thead>
+      <table><thead><tr><th>פריט</th><th>מלאי</th><th>סטטוס</th><th>עלות ₪ ליח׳</th><th>עדכון מלאי נוכחי</th></tr></thead>
       <tbody id="stockRows"></tbody></table>
     </div>
     <div class="hint">סטטוס: אזל = 0 · נמוך = עד 10 יחידות · תקין = מעל 10.</div>
@@ -470,6 +473,53 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       </form>
     </div>
     <div class="dept-grid" id="distribGrid"></div>
+  </section>
+
+  <!-- DISTRIBUTOR CONTROL -->
+  <section class="view" id="view-distctl" role="tabpanel">
+    <h1 class="view-title">בקרת מחלקים</h1>
+    <div class="view-sub">כמה חילק כל מחלק — פירוט לפי חודש, לפי שנה, והשוואה שנה מול שנה.</div>
+    <div class="toolbar">
+      <div class="seg" id="dcModeSeg">
+        <button type="button" class="segbtn" data-dcmode="month" aria-selected="true">לפי חודש</button>
+        <button type="button" class="segbtn" data-dcmode="year" aria-selected="false">לפי שנה</button>
+      </div>
+      <select class="selbox" id="dcYear"></select>
+    </div>
+    <div class="table-scroll">
+      <table class="pivot-table"><thead id="dcHead"></thead><tbody id="dcRows"></tbody></table>
+    </div>
+    <h2 class="view-title" style="font-size:1.15rem;margin-top:26px">השוואה שנה מול שנה</h2>
+    <div class="view-sub" id="dcYoYSub">סה״כ חלוקה לכל מחלק — השנה מול שנה שעברה.</div>
+    <div id="dcYoY" style="margin-top:8px"></div>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="view" id="view-budget" role="tabpanel">
+    <h1 class="view-title">תקציב</h1>
+    <div class="view-sub">תקציב שנתי מול עלות הציוד שנרכש (מה שחולק החוצה + מה שקיים במלאי).</div>
+    <div class="card">
+      <h2>תקציב שנתי</h2>
+      <form id="budgetForm" class="toolbar" style="margin:0">
+        <select class="selbox" id="budgetYear"></select>
+        <input class="search" id="budgetAmount" type="number" min="0" step="100" inputmode="numeric" placeholder="סכום תקציב ב₪…">
+        <button type="submit" class="btn">שמור</button>
+      </form>
+      <div class="hint" id="budgetHint"></div>
+    </div>
+    <div class="stats">
+      <div class="tile"><div class="label">תקציב <span id="bgYrA"></span></div><div class="value" id="bgBudget">₪0</div></div>
+      <div class="tile"><div class="label">עלות שנוצלה</div><div class="value" id="bgSpent">₪0</div></div>
+      <div class="tile"><div class="label">יתרת תקציב</div><div class="value" id="bgLeft">₪0</div></div>
+    </div>
+    <h2 class="view-title" style="font-size:1.1rem;margin-top:22px">עמידה בתקציב</h2>
+    <div id="bgBar"></div>
+    <h2 class="view-title" style="font-size:1.1rem;margin-top:22px">מצב מול שנה שעברה (עלות חלוקה)</h2>
+    <div id="bgYoY"></div>
+    <h2 class="view-title" style="font-size:1.1rem;margin-top:22px">פירוט לפי פריט <span id="bgYrB" style="color:var(--muted)"></span></h2>
+    <div class="table-scroll" style="margin-top:10px">
+      <table><thead><tr><th>פריט</th><th>עלות ₪ ליח׳</th><th>חולק</th><th>במלאי</th><th>עלות כוללת</th></tr></thead><tbody id="bgRows"></tbody></table>
+    </div>
   </section>
 
   <!-- REPORTS -->
@@ -648,13 +698,24 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     </div>
     <h1 class="view-title">מזגנים</h1>
     <div class="view-sub" id="acSub">רשימת המזגנים במשק. סינון לפי מספר, מיקום וסוג.</div>
+    <div class="card">
+      <h2>הוספת מזגן</h2>
+      <form id="acForm" class="form-grid">
+        <div class="field"><label for="acNum">מס׳ מזגן</label><input type="text" id="acNum" placeholder="מספר" required></div>
+        <div class="field"><label for="acLocI">מיקום</label><input type="text" id="acLocI" placeholder="מיקום" required></div>
+        <div class="field"><label for="acModelI">דגם</label><input type="text" id="acModelI" placeholder="דגם (לא חובה)"></div>
+        <div class="field"><label for="acTypeI">סוג</label><input type="text" id="acTypeI" placeholder="מפוצל עילי / מיני מרכזי" value="מפוצל עילי"></div>
+        <button type="submit" class="btn block" style="grid-column:1/-1">הוסף מזגן</button>
+      </form>
+      <div class="hint" id="acHint"></div>
+    </div>
     <div class="toolbar">
       <input class="search" id="acSearch" placeholder="חיפוש מספר מזגן…" inputmode="numeric">
       <select class="selbox" id="acLoc"><option value="">כל המיקומים</option></select>
       <select class="selbox" id="acType"><option value="">כל הסוגים</option></select>
     </div>
     <div class="table-scroll">
-      <table><thead><tr><th>מס׳ מזגן</th><th>מיקום</th><th>דגם</th><th>סוג</th></tr></thead>
+      <table><thead><tr><th>מס׳ מזגן</th><th>מיקום</th><th>דגם</th><th>סוג</th><th></th></tr></thead>
       <tbody id="acRows"></tbody></table>
     </div>
   </section>
@@ -697,7 +758,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   var baseline=(SEED.records||[]).map(function(r){r._base=true;return r;});
 
   // ---- runtime state ----
-  var state={items:[],depts:[],live:[],water:[],distributors:[],records:[]}; // come from db (or local fallback)
+  var state={items:[],depts:[],live:[],water:[],distributors:[],records:[],ac:[],budget:{}}; // come from db (or local fallback)
   var DEFAULT_DISTRIB=["אחמד אלחג","יחיא אבו בדר","נאדר שאמייה","עבד מחאמיד"];
   var db=null,user=null,DBMODE=false,canWrite=true,readOnly=false;
   var SB=null,SUPAMODE=false,_supaLoaded=false;
@@ -714,19 +775,92 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function allRecords(){return (SUPAMODE&&_supaLoaded)?state.records:baseline.concat(state.live);}
   function itemByName(n){for(var i=0;i<state.items.length;i++)if(state.items[i].name===n)return state.items[i];return null;}
 
+  function money(n){n=+n||0;return '₪'+(Math.round(n*100)/100).toLocaleString("he-IL");}
+  function yearOf(r){return (r.date||"").slice(0,4);}
+  function acSeedArr(){try{return (JSON.parse(document.getElementById("acData").textContent)||[]).map(function(a){return {_id:a.num,num:a.num,loc:a.loc,model:a.model,type:a.type};});}catch(e){return [];}}
+  function trackHTML(wpct,color){return '<div style="flex:1;height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden"><span style="display:block;height:100%;width:'+Math.max(0,Math.min(100,wpct)).toFixed(1)+'%;background:'+color+';border-radius:6px"></span></div>';}
+  function allYears(){var ys={};allRecords().forEach(function(r){var y=yearOf(r);if(y)ys[y]=1;});Object.keys(state.budget||{}).forEach(function(y){ys[y]=1;});var a=Object.keys(ys);var ty=String(new Date().getFullYear());if(a.indexOf(ty)<0)a.push(ty);return a.sort();}
+  var dcMode="month";
+  function setDCMode(m){dcMode=m;renderDistCtrl();}
+  function renderDistCtrl(){
+    var ySel=$("dcYear"); if(!ySel)return;
+    var years=allYears();
+    if(ySel.options.length!==years.length){var cur=ySel.value;ySel.innerHTML=years.map(function(y){return '<option>'+y+'</option>';}).join("");ySel.value=cur||String(new Date().getFullYear());}
+    var year=ySel.value||String(new Date().getFullYear());
+    var names={}; (state.distributors||[]).forEach(function(d){names[d]=1;}); allRecords().forEach(function(r){if(r.by)names[r.by]=1;});
+    var dists=Object.keys(names).filter(function(x){return x;});
+    var head=$("dcHead"),body=$("dcRows"); if(!head||!body)return;
+    if(dcMode==="month"){
+      var mlab=["ינו","פבר","מרץ","אפר","מאי","יונ","יול","אוג","ספט","אוק","נוב","דצמ"];
+      head.innerHTML='<tr><th class="rowh">מחלק</th>'+mlab.map(function(l){return '<th>'+l+'</th>';}).join("")+'<th class="tot">סה״כ '+year+'</th></tr>';
+      var cell={},rowtot={};
+      allRecords().forEach(function(r){if(yearOf(r)!==year||!r.by)return;var mi=(+recMonth(r).slice(5,7))-1;cell[r.by+"|"+mi]=(cell[r.by+"|"+mi]||0)+(+r.qty||0);rowtot[r.by]=(rowtot[r.by]||0)+(+r.qty||0);});
+      var rows=dists.filter(function(d){return rowtot[d];}).sort(function(a,b){return (rowtot[b]||0)-(rowtot[a]||0);});
+      if(rows.length===0){body.innerHTML='<tr><td colspan="14" class="empty">אין חלוקה בשנה זו</td></tr>';}
+      else body.innerHTML=rows.map(function(d){return '<tr><td class="rowh">'+esc(d)+'</td>'+mlab.map(function(l,mi){var v=cell[d+"|"+mi]||0;return '<td class="'+(v?'':'z')+'">'+(v||'–')+'</td>';}).join("")+'<td class="tot">'+nf(rowtot[d]||0)+'</td></tr>';}).join("");
+    } else {
+      var yrs=allYears();
+      head.innerHTML='<tr><th class="rowh">מחלק</th>'+yrs.map(function(y){return '<th>'+y+'</th>';}).join("")+'<th class="tot">סה״כ</th></tr>';
+      var cy={},rt={};
+      allRecords().forEach(function(r){if(!r.by)return;var y=yearOf(r);if(!y)return;cy[r.by+"|"+y]=(cy[r.by+"|"+y]||0)+(+r.qty||0);rt[r.by]=(rt[r.by]||0)+(+r.qty||0);});
+      var rows2=dists.filter(function(d){return rt[d];}).sort(function(a,b){return (rt[b]||0)-(rt[a]||0);});
+      if(rows2.length===0){body.innerHTML='<tr><td colspan="'+(yrs.length+2)+'" class="empty">אין נתונים</td></tr>';}
+      else body.innerHTML=rows2.map(function(d){return '<tr><td class="rowh">'+esc(d)+'</td>'+yrs.map(function(y){var v=cy[d+"|"+y]||0;return '<td class="'+(v?'':'z')+'">'+(v||'–')+'</td>';}).join("")+'<td class="tot">'+nf(rt[d]||0)+'</td></tr>';}).join("");
+    }
+    var thisY=year, lastY=String((+year)-1), tcur={},tprev={};
+    allRecords().forEach(function(r){if(!r.by)return;var y=yearOf(r);if(y===thisY)tcur[r.by]=(tcur[r.by]||0)+(+r.qty||0);else if(y===lastY)tprev[r.by]=(tprev[r.by]||0)+(+r.qty||0);});
+    var alld=Object.keys(tcur).concat(Object.keys(tprev)).filter(function(v,i,a){return a.indexOf(v)===i;}).sort(function(a,b){return (tcur[b]||0)-(tcur[a]||0);});
+    var mx=Math.max.apply(null,alld.map(function(d){return Math.max(tcur[d]||0,tprev[d]||0);}).concat([1]));
+    if($("dcYoYSub"))$("dcYoYSub").textContent='סה״כ חלוקה לכל מחלק — '+thisY+' מול '+lastY+'.';
+    if($("dcYoY"))$("dcYoY").innerHTML=alld.length?alld.map(function(d){
+      var c=tcur[d]||0,p=tprev[d]||0,wc=mx?(c/mx*100):0,wp=mx?(p/mx*100):0,diff=c-p,dc=diff>0?'var(--good)':diff<0?'var(--crit)':'var(--muted)';
+      return '<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div style="font-weight:700;margin-bottom:7px;display:flex;justify-content:space-between"><span>'+esc(d)+'</span><span style="color:'+dc+';font-weight:800">'+(diff>0?'▲ +':diff<0?'▼ ':'■ ')+nf(Math.abs(diff))+'</span></div>'+
+        '<div style="display:flex;align-items:center;gap:9px;margin:4px 0"><span style="min-width:40px;color:var(--muted);font-size:.8rem">'+thisY+'</span>'+trackHTML(wc,'var(--accent)')+'<span style="min-width:60px;text-align:left;font-variant-numeric:tabular-nums">'+nf(c)+'</span></div>'+
+        '<div style="display:flex;align-items:center;gap:9px;margin:4px 0"><span style="min-width:40px;color:var(--muted);font-size:.8rem">'+lastY+'</span>'+trackHTML(wp,'var(--muted)')+'<span style="min-width:60px;text-align:left;font-variant-numeric:tabular-nums">'+nf(p)+'</span></div></div>';
+    }).join(""):'<div class="empty">אין נתונים להשוואה</div>';
+  }
+  function renderBudget(){
+    var ySel=$("budgetYear"); if(!ySel)return;
+    var years=allYears();
+    if(ySel.options.length!==years.length){var cur=ySel.value;ySel.innerHTML=years.map(function(y){return '<option>'+y+'</option>';}).join("");ySel.value=cur||String(new Date().getFullYear());}
+    var year=ySel.value||String(new Date().getFullYear());
+    if($("bgYrA"))$("bgYrA").textContent=year; if($("bgYrB"))$("bgYrB").textContent=year;
+    var budget=+((state.budget||{})[year]||0);
+    var ba=$("budgetAmount"); if(ba&&document.activeElement!==ba)ba.value=budget||"";
+    var distY={};
+    allRecords().forEach(function(r){if(yearOf(r)===year)distY[r.item]=(distY[r.item]||0)+(+r.qty||0);});
+    var rowsHtml='',spent=0;
+    var items=state.items.slice().sort(function(a,b){return ((+b.cost||0)*((distY[b.name]||0)+(+b.stock||0)))-((+a.cost||0)*((distY[a.name]||0)+(+a.stock||0)));});
+    items.forEach(function(i){var dd=distY[i.name]||0,tot=dd+(+i.stock||0),c=+i.cost||0,line=tot*c;spent+=line;
+      rowsHtml+='<tr><td>'+esc(i.name)+'</td><td class="num">'+(c?money(c):'—')+'</td><td class="num">'+nf(dd)+'</td><td class="num">'+nf(i.stock)+'</td><td class="num">'+(line?money(line):'—')+'</td></tr>';});
+    if($("bgRows"))$("bgRows").innerHTML=items.length?rowsHtml:'<tr><td colspan="5" class="empty">אין פריטים</td></tr>';
+    var left=budget-spent;
+    if($("bgBudget"))$("bgBudget").textContent=money(budget);
+    if($("bgSpent"))$("bgSpent").textContent=money(spent);
+    if($("bgLeft")){$("bgLeft").textContent=money(left);$("bgLeft").style.color=left<0?'var(--crit)':'var(--good)';}
+    var usedPct=budget>0?(spent/budget*100):(spent>0?100:0),barColor=usedPct>100?'var(--crit)':usedPct>85?'var(--warn)':'var(--good)';
+    if($("bgBar"))$("bgBar").innerHTML='<div style="display:flex;align-items:center;gap:10px;margin:8px 0 4px"><div style="flex:1;height:18px;border-radius:10px;background:var(--surface-2);overflow:hidden"><span style="display:block;height:100%;width:'+Math.max(0,Math.min(100,usedPct)).toFixed(1)+'%;background:'+barColor+';border-radius:10px"></span></div><div style="font-weight:800;color:'+barColor+';min-width:52px;text-align:left">'+Math.round(usedPct)+'%</div></div><div style="font-size:.84rem;color:var(--muted)">'+(budget>0?('נוצלו '+money(spent)+' מתוך '+money(budget)+(left<0?(' · חריגה של '+money(-left)):(' · נותרו '+money(left)))):'הזן תקציב שנתי כדי לראות עמידה ביעד')+'</div>';
+    var costByYear={};
+    allRecords().forEach(function(r){var y=yearOf(r);if(!y)return;var it=itemByName(r.item);var c=it?(+it.cost||0):0;costByYear[y]=(costByYear[y]||0)+(+r.qty||0)*c;});
+    var ykeys=allYears().slice(-6),mx=Math.max.apply(null,ykeys.map(function(y){return costByYear[y]||0;}).concat([1]));
+    if($("bgYoY"))$("bgYoY").innerHTML=ykeys.map(function(y){var v=costByYear[y]||0,w=mx?(v/mx*100):0;return '<div style="display:flex;align-items:center;gap:10px;margin:8px 0"><div style="min-width:46px;font-weight:700'+(y===year?';color:var(--accent)':'')+'">'+y+'</div>'+trackHTML(w,y===year?'var(--accent)':'var(--accent-2)')+'<div style="min-width:92px;text-align:left;font-variant-numeric:tabular-nums">'+money(v)+'</div></div>';}).join("");
+  }
+  function setBudgetAmount(ev){ev.preventDefault();var y=$("budgetYear").value,amt=parseFloat($("budgetAmount").value)||0;setBudget(y,amt);if($("budgetHint"))$("budgetHint").innerHTML='<span style="color:var(--good)">התקציב לשנת '+esc(y)+' נשמר: '+money(amt)+'</span>';toast("התקציב נשמר ✓");}
+
+
   /* ---------- local fallback (when db is unavailable) ---------- */
   function loadLocal(){
-    state.items=(SEED.items||[]).map(function(i){return {_id:"i"+i.id,name:i.name,unit:i.unit,stock:i.stock};});
+    state.items=(SEED.items||[]).map(function(i){return {_id:"i"+i.id,name:i.name,unit:i.unit,stock:i.stock,cost:+i.cost||0};});
     state.depts=(SEED.depts||[]).slice();
-    state.live=[]; try{state.water=JSON.parse(document.getElementById("waterSeed").textContent)||[];}catch(e){state.water=[];} state.distributors=DEFAULT_DISTRIB.slice();
+    state.live=[]; try{state.water=JSON.parse(document.getElementById("waterSeed").textContent)||[];}catch(e){state.water=[];} state.distributors=DEFAULT_DISTRIB.slice(); state.ac=acSeedArr(); state.budget={};
     try{var raw=localStorage.getItem(LKEY);if(raw){var p=JSON.parse(raw);
-      if(p.items)state.items=p.items; if(p.depts)state.depts=p.depts; if(p.live)state.live=p.live; if(p.water)state.water=p.water; if(p.distributors)state.distributors=p.distributors;
+      if(p.items)state.items=p.items; if(p.depts)state.depts=p.depts; if(p.live)state.live=p.live; if(p.water)state.water=p.water; if(p.distributors)state.distributors=p.distributors; if(p.ac)state.ac=p.ac; if(p.budget)state.budget=p.budget;
     }}catch(e){}
   }
   function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify(state));}catch(e){}}
 
   /* ---------- render ---------- */
-  function renderAll(){ fillSelects(); renderDashboard(); renderHistory(); renderNav(); renderItems(); renderStock(); renderDepts(); renderDistributors(); renderReports(); renderWater(); applyWriteUI(); }
+  function renderAll(){ fillSelects(); renderDashboard(); renderHistory(); renderNav(); renderItems(); renderStock(); renderDepts(); renderDistributors(); renderReports(); renderWater(); renderAC(); renderDistCtrl(); renderBudget(); applyWriteUI(); }
 
   function applyWriteUI(){
     var disabled=readOnly||(!canWrite&&DBMODE);
@@ -843,9 +977,9 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
   function renderItems(){
     var tb=$("itemRows");
-    if(state.items.length===0){tb.innerHTML='<tr><td colspan="5" class="empty">אין פריטים</td></tr>';return;}
+    if(state.items.length===0){tb.innerHTML='<tr><td colspan="6" class="empty">אין פריטים</td></tr>';return;}
     tb.innerHTML=state.items.map(function(i){
-      return '<tr><td>'+esc(i.name)+'</td><td>'+esc(i.unit||"יח׳")+'</td><td class="num">'+nf(i.stock)+'</td><td class="num">'+nf(distThisMonth(i.name))+'</td><td><button class="del" data-del-item="'+esc(i._id)+'" aria-label="מחיקה">×</button></td></tr>';
+      return '<tr><td>'+esc(i.name)+'</td><td>'+esc(i.unit||"יח׳")+'</td><td class="num">'+nf(i.stock)+'</td><td class="num">'+nf(distThisMonth(i.name))+'</td><td class="num">'+((+i.cost)?money(i.cost):'—')+'</td><td><button class="del" data-del-item="'+esc(i._id)+'" aria-label="מחיקה">×</button></td></tr>';
     }).join("");
   }
 
@@ -857,10 +991,10 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     if(f==="low")list=list.filter(function(i){return i.stock>0&&i.stock<=10;});
     if(f==="out")list=list.filter(function(i){return i.stock<=0;});
     var tb=$("stockRows");
-    if(list.length===0){tb.innerHTML='<tr><td colspan="4" class="empty">אין פריטים</td></tr>';return;}
+    if(list.length===0){tb.innerHTML='<tr><td colspan="5" class="empty">אין פריטים</td></tr>';return;}
     tb.innerHTML=list.map(function(i){
       var st=stockStatus(i.stock);
-      return '<tr><td>'+esc(i.name)+'</td><td class="num">'+nf(i.stock)+' <span style="color:var(--muted);font-weight:500;font-size:.8rem">'+esc(i.unit||"")+'</span></td><td><span class="pill '+st[0]+'">'+st[1]+'</span></td><td><div class="toolbar" style="margin:0;gap:6px"><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-supply="'+esc(i._id)+'" style="width:78px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"><button class="btn ghost" data-supply-btn="'+esc(i._id)+'" style="padding:6px 12px">עדכן</button></div></td></tr>';
+      return '<tr><td>'+esc(i.name)+'</td><td class="num">'+nf(i.stock)+' <span style="color:var(--muted);font-weight:500;font-size:.8rem">'+esc(i.unit||"")+'</span></td><td><span class="pill '+st[0]+'">'+st[1]+'</span></td><td><input type="number" min="0" step="0.01" inputmode="decimal" value="'+(+i.cost||0)+'" data-cost="'+esc(i._id)+'" style="width:84px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td><td><div class="toolbar" style="margin:0;gap:6px"><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-supply="'+esc(i._id)+'" style="width:78px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"><button class="btn ghost" data-supply-btn="'+esc(i._id)+'" style="padding:6px 12px">עדכן</button></div></td></tr>';
     }).join("");
   }
 
@@ -943,7 +1077,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     }
   }
   function addItem(obj){
-    if(SUPAMODE){ obj._id="i"+Date.now(); state.items.push(obj); renderAll(); SB.from("items").insert({id:obj._id,name:obj.name,unit:obj.unit,stock:obj.stock}).then(function(){}); }
+    if(SUPAMODE){ obj._id="i"+Date.now(); state.items.push(obj); renderAll(); SB.from("items").insert({id:obj._id,name:obj.name,unit:obj.unit,stock:obj.stock,cost:obj.cost||0}).then(function(){}); }
     else{ obj._id="L"+Date.now(); state.items.push(obj); saveLocal(); renderAll(); }
   }
   function delItem(id){
@@ -954,6 +1088,10 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     if(SUPAMODE){ var it=state.items.filter(function(i){return i._id==id;})[0]; if(it){it.stock=newStock;renderAll();} SB.from("items").update({stock:newStock}).eq("id",id).then(function(){}); }
     else{ var it=state.items.filter(function(i){return i._id==id;})[0]; if(it){it.stock=newStock;saveLocal();renderAll();} }
   }
+  function setItemCost(id,cost){ if(SUPAMODE){ var it=state.items.filter(function(i){return i._id==id;})[0]; if(it){it.cost=cost;renderAll();} SB.from("items").update({cost:cost}).eq("id",id).then(function(){}); } else { var it=state.items.filter(function(i){return i._id==id;})[0]; if(it){it.cost=cost;saveLocal();renderAll();} } }
+  function addAc(obj){ if(SUPAMODE){ obj._id=obj.num; state.ac.push(obj); renderAll(); SB.from("air_conditioners").upsert({num:obj.num,loc:obj.loc,model:obj.model,type:obj.type}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה");}); } else { obj._id=obj.num||("a"+Date.now()); state.ac.push(obj); saveLocal(); renderAll(); } }
+  function delAc(id){ if(SUPAMODE){ state.ac=state.ac.filter(function(a){return a._id!=id;}); renderAll(); SB.from("air_conditioners").delete().eq("num",id).then(function(){}); } else { state.ac=state.ac.filter(function(a){return a._id!=id;}); saveLocal(); renderAll(); } }
+  function setBudget(y,amt){ state.budget[y]=amt; renderAll(); if(SUPAMODE){ SB.from("budgets").upsert({year:+y,amount:amt}).then(function(r){if(r&&r.error)toast("שמירת תקציב נכשלה — ודא שהטבלה budgets קיימת ב-Supabase");}); } else { saveLocal(); } }
   function addWater(obj){
     if(SUPAMODE){ obj._id=obj.serial||("w"+Date.now()); state.water.push(obj); renderAll(); SB.from("water_devices").upsert({serial:obj._id,loc:obj.loc,model:obj.model,note:obj.note}).then(function(){}); }
     else{ obj._id="L"+Date.now(); state.water.push(obj); saveLocal(); renderAll(); }
@@ -1044,8 +1182,8 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     ev.preventDefault();
     var nm=$("iName").value.trim();if(!nm)return;
     if(itemByName(nm)){$("iName").focus();return;}
-    addItem({name:nm,unit:$("iUnit").value.trim()||"יח׳",stock:parseInt($("iStock").value,10)||0});
-    this.reset();$("iUnit").value="יח׳";$("iStock").value=0;$("iName").focus();
+    addItem({name:nm,unit:$("iUnit").value.trim()||"יח׳",stock:parseInt($("iStock").value,10)||0,cost:parseFloat($("iCost").value)||0});
+    this.reset();$("iUnit").value="יח׳";$("iStock").value=0;$("iCost").value=0;$("iName").focus();
   });
 
   $("deptForm").addEventListener("submit",function(ev){
@@ -1076,11 +1214,15 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var rid=t.getAttribute&&t.getAttribute("data-del-rec"); if(rid){delRecord(rid);return;}
     var iid=t.getAttribute&&t.getAttribute("data-del-item"); if(iid){delItem(iid);return;}
     var wid=t.getAttribute&&t.getAttribute("data-del-water"); if(wid){delWater(wid);return;}
+    var aid=t.getAttribute&&t.getAttribute("data-del-ac"); if(aid){delAc(aid);return;}
     var dn=t.getAttribute&&t.getAttribute("data-del-dept"); if(dn){setDepts(state.depts.filter(function(d){return d!==dn;}));return;}
     var dx=t.getAttribute&&t.getAttribute("data-del-distrib"); if(dx){setDistributors(state.distributors.filter(function(d){return d!==dx;}));return;}
     var sid=t.getAttribute&&t.getAttribute("data-supply-btn");
     if(sid){var inp=document.querySelector('[data-supply="'+sid+'"]');var val=parseInt(inp&&inp.value,10);
-      if(!isNaN(val)&&val>=0){adjustStock(sid,val);toast("המלאי עודכן ✓");}
+      var cinp=document.querySelector('[data-cost="'+sid+'"]');var cval=cinp?parseFloat(cinp.value):NaN;
+      if(!isNaN(cval)&&cval>=0)setItemCost(sid,cval);
+      if(!isNaN(val)&&val>=0)adjustStock(sid,val);
+      toast("עודכן ✓");
       return;}
   });
 
@@ -1089,6 +1231,10 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   $("sSearch").addEventListener("input",renderStock);
   $("sFilter").addEventListener("change",renderStock);
   $("repMonth").addEventListener("change",renderReports);
+  if($("dcModeSeg"))$("dcModeSeg").addEventListener("click",function(ev){var b=ev.target.closest(".segbtn");if(!b)return;setDCMode(b.getAttribute("data-dcmode"));document.querySelectorAll("#dcModeSeg .segbtn").forEach(function(x){x.setAttribute("aria-selected",x===b?"true":"false");});});
+  if($("dcYear"))$("dcYear").addEventListener("change",renderDistCtrl);
+  if($("budgetYear"))$("budgetYear").addEventListener("change",renderBudget);
+  if($("budgetForm"))$("budgetForm").addEventListener("submit",setBudgetAmount);
   $("repModeSeg").addEventListener("click",function(ev){var b=ev.target.closest(".segbtn");if(!b)return;repMode=b.getAttribute("data-mode");document.querySelectorAll("#repModeSeg .segbtn").forEach(function(x){x.setAttribute("aria-selected",x===b?"true":"false");});$("repMonth").value="";fillSelects();renderReports();});
   document.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest(".mnav [data-nav]");if(!b)return;var n=b.getAttribute("data-nav");if(n==="prev")shiftMonth(-1);else if(n==="next")shiftMonth(1);else if(n==="today")setMonth(curMonth());});
   document.addEventListener("change",function(ev){var s=ev.target.closest&&ev.target.closest(".mnav [data-nav]");if(!s||s.tagName!=="SELECT")return;var cont=s.closest(".mnav");var mo=cont.querySelector('[data-nav="mo"]').value,yr=cont.querySelector('[data-nav="yr"]').value;setMonth(yr+"-"+String(mo).padStart(2,"0"));});
@@ -1104,35 +1250,36 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   try{var st=localStorage.getItem("meshek_tab");if(st){var bb=document.querySelector('#subrail .subtab[data-tab="'+st+'"]');if(bb)bb.click();}}catch(e){}
 
   // ---- air conditioners (מזגנים) ----
-  var ACS=[];
-  try{ACS=JSON.parse(document.getElementById("acData").textContent)||[];}catch(e){}
-  function initAC(){
-    var locs={},types={};
-    ACS.forEach(function(a){if(a.loc)locs[a.loc]=1;if(a.type)types[a.type]=1;});
-    var lSel=$("acLoc"),tSel=$("acType");
-    if(lSel)lSel.innerHTML='<option value="">כל המיקומים</option>'+Object.keys(locs).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(l){return '<option>'+esc(l)+'</option>';}).join("");
-    if(tSel)tSel.innerHTML='<option value="">כל הסוגים</option>'+Object.keys(types).sort().map(function(t){return '<option>'+esc(t)+'</option>';}).join("");
-    renderAC();
-  }
   function renderAC(){
-    var q=($("acSearch").value||"").trim(),loc=$("acLoc").value,typ=$("acType").value;
-    var list=ACS.filter(function(a){
-      if(q&&a.num.indexOf(q)<0)return false;
+    var lf=$("acLoc"),tf=$("acType");
+    if(lf&&tf){var locs={},types={};state.ac.forEach(function(a){if(a.loc)locs[a.loc]=1;if(a.type)types[a.type]=1;});
+      var lc=lf.value,tc=tf.value;
+      lf.innerHTML='<option value="">כל המיקומים</option>'+Object.keys(locs).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(l){return '<option>'+esc(l)+'</option>';}).join("");
+      tf.innerHTML='<option value="">כל הסוגים</option>'+Object.keys(types).sort().map(function(t){return '<option>'+esc(t)+'</option>';}).join("");
+      lf.value=lc;tf.value=tc;}
+    var q=($("acSearch")?$("acSearch").value:"").trim(),loc=lf?lf.value:"",typ=tf?tf.value:"";
+    var list=state.ac.filter(function(a){
+      if(q&&(a.num||"").indexOf(q)<0)return false;
       if(loc&&a.loc!==loc)return false;
       if(typ&&a.type!==typ)return false;
-      return true;
-    });
-    $("acSub").textContent="רשימת המזגנים במשק — "+nf(list.length)+" מתוך "+nf(ACS.length)+" יחידות.";
-    var tb=$("acRows");
-    if(list.length===0){tb.innerHTML='<tr><td colspan="4" class="empty">לא נמצאו מזגנים</td></tr>';return;}
+      return true;});
+    if($("acSub"))$("acSub").textContent="רשימת המזגנים במשק — "+nf(list.length)+" מתוך "+nf(state.ac.length)+" יחידות.";
+    var tb=$("acRows"); if(!tb)return;
+    if(list.length===0){tb.innerHTML='<tr><td colspan="5" class="empty">'+(state.ac.length?"לא נמצאו מזגנים":"אין מזגנים")+'</td></tr>';return;}
     tb.innerHTML=list.map(function(a){
-      return '<tr><td class="num">'+esc(a.num)+'</td><td>'+esc(a.loc)+'</td><td>'+esc(a.model)+'</td><td><span class="chip">'+esc(a.type)+'</span></td></tr>';
+      return '<tr><td class="num">'+esc(a.num)+'</td><td>'+esc(a.loc)+'</td><td>'+esc(a.model||"—")+'</td><td><span class="chip">'+esc(a.type||"—")+'</span></td><td><button class="del" data-del-ac="'+esc(a._id)+'" aria-label="מחיקה">×</button></td></tr>';
     }).join("");
   }
-  $("acSearch").addEventListener("input",renderAC);
-  $("acLoc").addEventListener("change",renderAC);
-  $("acType").addEventListener("change",renderAC);
-  initAC();
+  if($("acSearch"))$("acSearch").addEventListener("input",renderAC);
+  if($("acLoc"))$("acLoc").addEventListener("change",renderAC);
+  if($("acType"))$("acType").addEventListener("change",renderAC);
+  if($("acForm"))$("acForm").addEventListener("submit",function(ev){ev.preventDefault();
+    var num=($("acNum").value||"").trim();if(!num)return;
+    if(state.ac.some(function(a){return a.num===num;})){if($("acHint"))$("acHint").innerHTML='<span style="color:var(--crit)">מספר מזגן כבר קיים.</span>';return;}
+    addAc({num:num,loc:($("acLocI").value||"").trim(),model:($("acModelI").value||"").trim(),type:($("acTypeI").value||"").trim()||"מפוצל עילי"});
+    if($("acHint"))$("acHint").innerHTML='<span style="color:var(--good)">המזגן נוסף ✓</span>';toast("המזגן נוסף ✓");
+    this.reset();$("acTypeI").value="מפוצל עילי";$("acNum").focus();
+  });
   // ---- rapid doors (דלתות מהירות) ----
   var DOORS=[]; try{DOORS=JSON.parse(document.getElementById("doorsData").textContent)||[];}catch(e){}
   var DCONTACTS=[]; try{DCONTACTS=JSON.parse(document.getElementById("doorsContactsData").textContent)||[];}catch(e){}
@@ -1242,18 +1389,20 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   // ---- Supabase shared backend (live, anyone can edit) ----
   function supaRefetch(which){
     if(!SUPAMODE)return;
-    if(which==="items")SB.from("items").select("*").then(function(r){if(r&&r.data){state.items=r.data.map(function(x){return {_id:x.id,name:x.name,unit:x.unit,stock:+x.stock||0};}).sort(function(a,b){return (a.name||"").localeCompare(b.name||"","he");});renderAll();}});
+    if(which==="items")SB.from("items").select("*").then(function(r){if(r&&r.data){state.items=r.data.map(function(x){return {_id:x.id,name:x.name,unit:x.unit,stock:+x.stock||0,cost:+x.cost||0};}).sort(function(a,b){return (a.name||"").localeCompare(b.name||"","he");});renderAll();}});
     else if(which==="records")SB.from("records").select("*").then(function(r){if(r&&r.data){state.records=r.data.map(function(x){return {_id:x.id,date:x.date,dept:x.dept,item:x.item,qty:+x.qty||0,by:x["by"]||"",note:x.note||""};});_supaLoaded=true;renderAll();setStatus("live");}});
     else if(which==="departments")SB.from("departments").select("*").then(function(r){if(r&&r.data){state.depts=r.data.map(function(x){return x.name;});renderAll();}});
     else if(which==="distributors")SB.from("distributors").select("*").then(function(r){if(r&&r.data&&r.data.length){state.distributors=r.data.map(function(x){return x.name;});renderAll();}});
     else if(which==="water")SB.from("water_devices").select("*").then(function(r){if(r&&r.data){state.water=r.data.map(function(x){return {_id:x.serial,serial:x.serial,loc:x.loc,model:x.model,note:x.note};});renderAll();}});
+    else if(which==="ac")SB.from("air_conditioners").select("*").then(function(r){if(r&&r.data&&r.data.length){state.ac=r.data.map(function(x){return {_id:x.num,num:x.num,loc:x.loc,model:x.model,type:x.type};});renderAll();}});
+    else if(which==="budgets")SB.from("budgets").select("*").then(function(r){if(r&&r.data){var b={};r.data.forEach(function(x){b[x.year]=+x.amount||0;});state.budget=b;renderAll();}});
   }
   (function(){
     if(!(window.supabase&&window.SUPA_URL&&window.SUPA_KEY)){ SUPAMODE=false; setStatus("local"); return; }
     try{ SB=window.supabase.createClient(window.SUPA_URL,window.SUPA_KEY); window.__SB=SB; }catch(e){ SB=null; }
     if(!SB){ SUPAMODE=false; setStatus("local"); return; }
     SUPAMODE=true; setStatus("connecting");
-    supaRefetch("items");supaRefetch("records");supaRefetch("departments");supaRefetch("distributors");supaRefetch("water");
+    supaRefetch("items");supaRefetch("records");supaRefetch("departments");supaRefetch("distributors");supaRefetch("water");supaRefetch("ac");supaRefetch("budgets");
     try{
       SB.channel("galam-rt")
         .on("postgres_changes",{event:"*",schema:"public",table:"items"},function(){supaRefetch("items");})
@@ -1261,6 +1410,8 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
         .on("postgres_changes",{event:"*",schema:"public",table:"departments"},function(){supaRefetch("departments");})
         .on("postgres_changes",{event:"*",schema:"public",table:"distributors"},function(){supaRefetch("distributors");})
         .on("postgres_changes",{event:"*",schema:"public",table:"water_devices"},function(){supaRefetch("water");})
+        .on("postgres_changes",{event:"*",schema:"public",table:"air_conditioners"},function(){supaRefetch("ac");})
+        .on("postgres_changes",{event:"*",schema:"public",table:"budgets"},function(){supaRefetch("budgets");})
         .subscribe();
     }catch(e){}
   })();
