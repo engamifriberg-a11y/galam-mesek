@@ -675,6 +675,18 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       </div>
       <button class="btn ghost" id="drExport">ייצוא לאקסל</button>
     </div>
+    <div class="card">
+      <h2>הוספת דלת</h2>
+      <form id="doorForm" class="form-grid">
+        <div class="field wide"><label for="drNewLoc">מיקום</label><input type="text" id="drNewLoc" placeholder="מיקום הדלת" required></div>
+        <div class="field"><label for="drNewSupplier">ספק</label><select id="drNewSupplier" class="selbox" style="max-width:none;width:100%"><option value="">— בחר ספק —</option></select></div>
+        <div class="field"><label for="drNewNum">מספר גלעם</label><input type="text" id="drNewNum" placeholder="EG-…"></div>
+        <div class="field"><label for="drNewMaker">יצרן</label><input type="text" id="drNewMaker" placeholder="יצרן"></div>
+        <div class="field"><label for="drNewSerial">דגם / מספר</label><input type="text" id="drNewSerial" placeholder="דגם או מספר סריאלי"></div>
+        <button type="submit" class="btn block" style="grid-column:1/-1">הוסף דלת</button>
+      </form>
+      <div class="hint" id="doorHint" style="margin-top:4px">טלפון השירות ואיש הקשר יתווספו אוטומטית לפי הספק שנבחר.</div>
+    </div>
     <div class="toolbar">
       <input class="search" id="drSearch" placeholder="חיפוש מספר / דגם / מיקום / איש קשר…">
       <select class="selbox" id="drLoc"><option value="">כל המיקומים</option></select>
@@ -682,7 +694,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       <select class="selbox" id="drMaker"><option value="">כל היצרנים</option></select>
     </div>
     <div class="table-scroll">
-      <table><thead><tr><th>מיקום</th><th>מספר גלעם</th><th>יצרן</th><th>ספק</th><th>דגם / מספר</th><th>טלפון שירות</th><th>איש קשר</th><th>אימייל</th><th>הערות</th></tr></thead>
+      <table><thead><tr><th>מיקום</th><th>מספר גלעם</th><th>יצרן</th><th>ספק</th><th>דגם / מספר</th><th>טלפון שירות</th><th>איש קשר</th><th>אימייל</th><th>הערות</th><th></th></tr></thead>
       <tbody id="doorsRows"></tbody></table>
     </div>
     <h2 class="view-title" style="font-size:1.25rem;margin-top:28px">פרטי אנשי קשר — ספקי הדלתות</h2>
@@ -764,7 +776,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   var baseline=(SEED.records||[]).map(function(r){r._base=true;return r;});
 
   // ---- runtime state ----
-  var state={items:[],depts:[],live:[],water:[],distributors:[],records:[],ac:[],budget:{}}; // come from db (or local fallback)
+  var state={items:[],depts:[],live:[],water:[],distributors:[],records:[],ac:[],budget:{},doors:[]}; // come from db (or local fallback)
   var DEFAULT_DISTRIB=["אחמד אלחג","יחיא אבו בדר","נאדר שאמייה","עבד מחאמיד"];
   var db=null,user=null,DBMODE=false,canWrite=true,readOnly=false;
   var SB=null,SUPAMODE=false,_supaLoaded=false;
@@ -858,15 +870,15 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function loadLocal(){
     state.items=(SEED.items||[]).map(function(i){return {_id:"i"+i.id,name:i.name,unit:i.unit,stock:i.stock,cost:+i.cost||0};});
     state.depts=(SEED.depts||[]).slice();
-    state.live=[]; try{state.water=JSON.parse(document.getElementById("waterSeed").textContent)||[];}catch(e){state.water=[];} state.distributors=DEFAULT_DISTRIB.slice(); state.ac=acSeedArr(); state.budget={};
+    state.live=[]; try{state.water=JSON.parse(document.getElementById("waterSeed").textContent)||[];}catch(e){state.water=[];} state.distributors=DEFAULT_DISTRIB.slice(); state.ac=acSeedArr(); state.budget={}; state.doors=doorsSeedArr();
     try{var raw=localStorage.getItem(LKEY);if(raw){var p=JSON.parse(raw);
-      if(p.items)state.items=p.items; if(p.depts)state.depts=p.depts; if(p.live)state.live=p.live; if(p.water)state.water=p.water; if(p.distributors)state.distributors=p.distributors; if(p.ac)state.ac=p.ac; if(p.budget)state.budget=p.budget;
+      if(p.items)state.items=p.items; if(p.depts)state.depts=p.depts; if(p.live)state.live=p.live; if(p.water)state.water=p.water; if(p.distributors)state.distributors=p.distributors; if(p.ac)state.ac=p.ac; if(p.budget)state.budget=p.budget; if(p.doors)state.doors=p.doors;
     }}catch(e){}
   }
   function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify(state));}catch(e){}}
 
   /* ---------- render ---------- */
-  function renderAll(){ fillSelects(); renderDashboard(); renderHistory(); renderNav(); renderItems(); renderStock(); renderDepts(); renderDistributors(); renderReports(); renderWater(); renderAC(); renderDistCtrl(); renderBudget(); applyWriteUI(); }
+  function renderAll(){ fillSelects(); renderDashboard(); renderHistory(); renderNav(); renderItems(); renderStock(); renderDepts(); renderDistributors(); renderReports(); renderWater(); renderAC(); initDoors(); renderDistCtrl(); renderBudget(); applyWriteUI(); }
 
   function applyWriteUI(){
     var disabled=readOnly||(!canWrite&&DBMODE);
@@ -1097,6 +1109,8 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function setItemCost(id,cost){ if(SUPAMODE){ var it=state.items.filter(function(i){return i._id==id;})[0]; if(it){it.cost=cost;renderAll();} SB.from("items").update({cost:cost}).eq("id",id).then(function(){}); } else { var it=state.items.filter(function(i){return i._id==id;})[0]; if(it){it.cost=cost;saveLocal();renderAll();} } }
   function addAc(obj){ if(SUPAMODE){ obj._id=obj.num; state.ac.push(obj); renderAll(); SB.from("air_conditioners").upsert({num:obj.num,loc:obj.loc,model:obj.model,type:obj.type}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה");}); } else { obj._id=obj.num||("a"+Date.now()); state.ac.push(obj); saveLocal(); renderAll(); } }
   function delAc(id){ if(SUPAMODE){ state.ac=state.ac.filter(function(a){return a._id!=id;}); renderAll(); SB.from("air_conditioners").delete().eq("num",id).then(function(){}); } else { state.ac=state.ac.filter(function(a){return a._id!=id;}); saveLocal(); renderAll(); } }
+  function addDoor(obj){ if(SUPAMODE){ obj._id="dr"+Date.now(); state.doors.push(obj); renderAll(); SB.from("doors").insert({id:obj._id,num:obj.num,maker:obj.maker,supplier:obj.supplier,serial:obj.serial,loc:obj.loc,svc_phone:obj.svc_phone,contact:obj.contact,mgr_phone:obj.mgr_phone,email:obj.email,notes:obj.notes}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה — ודא שהטבלה doors קיימת");}); } else { obj._id="dr"+Date.now(); state.doors.push(obj); saveLocal(); renderAll(); } }
+  function delDoor(id){ if(SUPAMODE){ state.doors=state.doors.filter(function(d){return d._id!=id;}); renderAll(); SB.from("doors").delete().eq("id",id).then(function(){}); } else { state.doors=state.doors.filter(function(d){return d._id!=id;}); saveLocal(); renderAll(); } }
   function setBudget(y,amt){ state.budget[y]=amt; renderAll(); if(SUPAMODE){ SB.from("budgets").upsert({year:+y,amount:amt}).then(function(r){if(r&&r.error)toast("שמירת תקציב נכשלה — ודא שהטבלה budgets קיימת ב-Supabase");}); } else { saveLocal(); } }
   function addWater(obj){
     if(SUPAMODE){ obj._id=obj.serial||("w"+Date.now()); state.water.push(obj); renderAll(); SB.from("water_devices").upsert({serial:obj._id,loc:obj.loc,model:obj.model,note:obj.note}).then(function(){}); }
@@ -1221,6 +1235,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var iid=t.getAttribute&&t.getAttribute("data-del-item"); if(iid){delItem(iid);return;}
     var wid=t.getAttribute&&t.getAttribute("data-del-water"); if(wid){delWater(wid);return;}
     var aid=t.getAttribute&&t.getAttribute("data-del-ac"); if(aid){delAc(aid);return;}
+    var did=t.getAttribute&&t.getAttribute("data-del-door"); if(did){delDoor(did);return;}
     var dn=t.getAttribute&&t.getAttribute("data-del-dept"); if(dn){setDepts(state.depts.filter(function(d){return d!==dn;}));return;}
     var dx=t.getAttribute&&t.getAttribute("data-del-distrib"); if(dx){setDistributors(state.distributors.filter(function(d){return d!==dx;}));return;}
     var sid=t.getAttribute&&t.getAttribute("data-supply-btn");
@@ -1287,18 +1302,20 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     this.reset();$("acTypeI").value="מפוצל עילי";$("acNum").focus();
   });
   // ---- rapid doors (דלתות מהירות) ----
-  var DOORS=[]; try{DOORS=JSON.parse(document.getElementById("doorsData").textContent)||[];}catch(e){}
+  function doorsSeedArr(){try{return (JSON.parse(document.getElementById("doorsData").textContent)||[]).map(function(d,i){return {_id:d._id||("d"+i),num:d.num||"",maker:d.maker||"",supplier:d.supplier||"",serial:d.serial||"",loc:d.loc||"",svc_phone:d.svc_phone||"",contact:d.contact||"",mgr_phone:d.mgr_phone||"",email:d.email||"",notes:d.notes||""};});}catch(e){return [];}}
   var DCONTACTS=[]; try{DCONTACTS=JSON.parse(document.getElementById("doorsContactsData").textContent)||[];}catch(e){}
   function telHref(p){return "tel:"+((p||"")+"").replace(/[^0-9+]/g,"");}
-  function doorCount(sup){var n=0;DOORS.forEach(function(d){if(d.supplier===sup)n++;});return n;}
+  function doorCount(sup){var n=0;state.doors.forEach(function(d){if(d.supplier===sup)n++;});return n;}
   function initDoors(){
+    if(typeof DCONTACTS==="undefined"||!DCONTACTS)return;
     var sSel=$("drSupplier"),mSel=$("drMaker");
     var sups=DCONTACTS.map(function(c){return c.supplier;});
-    DOORS.forEach(function(d){if(d.supplier&&sups.indexOf(d.supplier)<0)sups.push(d.supplier);});
-    var mk={}; DOORS.forEach(function(d){if(d.maker)mk[d.maker]=1;});
-    var lSel=$("drLoc"); if(lSel){var dlocs={};DOORS.forEach(function(d){if(d.loc)dlocs[d.loc]=1;});var lcur=lSel.value;lSel.innerHTML='<option value="">כל המיקומים</option>'+Object.keys(dlocs).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(l){return '<option>'+esc(l)+'</option>';}).join("");lSel.value=lcur;}
-    if(sSel)sSel.innerHTML='<option value="">כל הספקים</option>'+sups.map(function(s){return '<option>'+esc(s)+'</option>';}).join("");
-    if(mSel)mSel.innerHTML='<option value="">כל היצרנים</option>'+Object.keys(mk).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(m){return '<option>'+esc(m)+'</option>';}).join("");
+    state.doors.forEach(function(d){if(d.supplier&&sups.indexOf(d.supplier)<0)sups.push(d.supplier);});
+    var mk={}; state.doors.forEach(function(d){if(d.maker)mk[d.maker]=1;});
+    var lSel=$("drLoc"); if(lSel){var dlocs={};state.doors.forEach(function(d){if(d.loc)dlocs[d.loc]=1;});var lcur=lSel.value;lSel.innerHTML='<option value="">כל המיקומים</option>'+Object.keys(dlocs).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(l){return '<option>'+esc(l)+'</option>';}).join("");lSel.value=lcur;}
+    if(sSel){var _sc=sSel.value;sSel.innerHTML='<option value="">כל הספקים</option>'+sups.map(function(s){return '<option>'+esc(s)+'</option>';}).join("");sSel.value=_sc;}
+    var asel=$("drNewSupplier"); if(asel){var _asc=asel.value;var alls=DCONTACTS.map(function(c){return c.supplier;});state.doors.forEach(function(d){if(d.supplier&&alls.indexOf(d.supplier)<0)alls.push(d.supplier);});asel.innerHTML='<option value="">— בחר ספק —</option>'+alls.map(function(s){return '<option>'+esc(s)+'</option>';}).join("");asel.value=_asc;}
+    if(mSel){var _mc=mSel.value;mSel.innerHTML='<option value="">כל היצרנים</option>'+Object.keys(mk).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(m){return '<option>'+esc(m)+'</option>';}).join("");mSel.value=_mc;}
     var ce=$("doorsContacts");
     if(ce){ ce.innerHTML=DCONTACTS.map(function(c){
       var n=doorCount(c.supplier);
@@ -1317,29 +1334,30 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   }
   function renderDoors(){
     var q=($("drSearch").value||"").trim(),sup=$("drSupplier").value,mk=$("drMaker").value,dloc=($("drLoc")?$("drLoc").value:"");
-    var list=DOORS.filter(function(d){
+    var list=state.doors.filter(function(d){
       if(q && (d.num||"").indexOf(q)<0 && (d.serial||"").indexOf(q)<0 && (d.loc||"").indexOf(q)<0 && (d.contact||"").indexOf(q)<0 && (d.svc_phone||"").indexOf(q)<0)return false;
       if(sup&&d.supplier!==sup)return false;
       if(mk&&d.maker!==mk)return false;
       if(dloc&&d.loc!==dloc)return false;
       return true;
     });
-    if($("doorsSub"))$("doorsSub").textContent="רשימת הדלתות המהירות — "+nf(list.length)+" מתוך "+nf(DOORS.length)+" דלתות.";
+    if($("doorsSub"))$("doorsSub").textContent="רשימת הדלתות המהירות — "+nf(list.length)+" מתוך "+nf(state.doors.length)+" דלתות.";
     var tb=$("doorsRows");if(!tb)return;
-    if(list.length===0){tb.innerHTML='<tr><td colspan="9" class="empty">לא נמצאו דלתות</td></tr>';return;}
+    if(list.length===0){tb.innerHTML='<tr><td colspan="10" class="empty">לא נמצאו דלתות</td></tr>';return;}
     tb.innerHTML=list.map(function(d){
       return '<tr><td>'+esc(d.loc||"")+'</td><td class="num">'+esc(d.num||"")+'</td><td>'+esc(d.maker||"—")+'</td><td><span class="chip">'+esc(d.supplier||"—")+'</span></td><td class="num">'+esc(d.serial||"")+'</td>'+
         '<td class="num">'+(d.svc_phone?'<a href="'+telHref(d.svc_phone)+'" style="color:var(--accent);text-decoration:none;white-space:nowrap">'+esc(d.svc_phone)+'</a>':'—')+'</td>'+
         '<td>'+esc(d.contact||"—")+'</td>'+
         '<td>'+(d.email?'<a href="mailto:'+esc(d.email)+'" style="color:var(--accent);text-decoration:none">'+esc(d.email)+'</a>':'—')+'</td>'+
-        '<td style="font-size:.82rem;color:var(--muted);max-width:220px">'+esc(d.notes||"")+'</td></tr>';
+        '<td style="font-size:.82rem;color:var(--muted);max-width:220px">'+esc(d.notes||"")+'</td>'+
+        '<td><button class="del" data-del-door="'+esc(d._id)+'" aria-label="מחיקה">×</button></td></tr>';
     }).join("");
   }
   async function exportDoors(){
     if(typeof XLSX==="undefined"){alert("מנוע האקסל לא נטען — נסה לרענן");return;}
     var wb=XLSX.utils.book_new(); wb.Workbook={Views:[{RTL:true}]};
     var aoa=[["מיקום","מספר גלעם","יצרן","ספק","דגם / מספר","טלפון שירות","איש קשר","טלפון מנהל","אימייל","הערות"]];
-      DOORS.forEach(function(d){aoa.push([d.loc,d.num,d.maker,d.supplier,d.serial,d.svc_phone,d.contact,d.mgr_phone,d.email,d.notes]);});
+      state.doors.forEach(function(d){aoa.push([d.loc,d.num,d.maker,d.supplier,d.serial,d.svc_phone,d.contact,d.mgr_phone,d.email,d.notes]);});
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),"דלתות");
     var caoa=[["ספק","טלפון שירות","איש קשר","טלפון מנהל","אימייל","הערות"]];
     DCONTACTS.forEach(function(c){caoa.push([c.supplier,c.service_phone,c.contact,c.manager_phone,c.email,c.notes]);});
@@ -1353,6 +1371,16 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   if($("drLoc"))$("drLoc").addEventListener("change",renderDoors);
   $("drSupplier").addEventListener("change",renderDoors);
   $("drMaker").addEventListener("change",renderDoors);
+  if($("doorForm"))$("doorForm").addEventListener("submit",function(ev){ev.preventDefault();
+    var loc=($("drNewLoc").value||"").trim(); if(!loc){if($("doorHint"))$("doorHint").innerHTML='<span style="color:var(--crit)">יש להזין מיקום.</span>';return;}
+    var supplier=($("drNewSupplier").value||"").trim();
+    var obj={loc:loc,supplier:supplier,num:($("drNewNum").value||"").trim(),maker:($("drNewMaker").value||"").trim(),serial:($("drNewSerial").value||"").trim(),svc_phone:"",contact:"",mgr_phone:"",email:"",notes:""};
+    var c=DCONTACTS.filter(function(x){return x.supplier===supplier;})[0];
+    if(c){obj.svc_phone=c.service_phone||"";obj.contact=c.contact||"";obj.mgr_phone=c.manager_phone||"";obj.email=c.email||"";obj.notes=c.notes||"";}
+    addDoor(obj);
+    if($("doorHint"))$("doorHint").innerHTML='<span style="color:var(--good)">הדלת נוספה ✓</span>';toast("הדלת נוספה ✓");
+    this.reset();
+  });
   if($("drExport"))$("drExport").addEventListener("click",exportDoors);
   initDoors();
 
@@ -1404,13 +1432,14 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     else if(which==="water")SB.from("water_devices").select("*").then(function(r){if(r&&r.data){state.water=r.data.map(function(x){return {_id:x.serial,serial:x.serial,loc:x.loc,model:x.model,note:x.note};});renderAll();}});
     else if(which==="ac")SB.from("air_conditioners").select("*").then(function(r){if(r&&r.data&&r.data.length){state.ac=r.data.map(function(x){return {_id:x.num,num:x.num,loc:x.loc,model:x.model,type:x.type};});renderAll();}});
     else if(which==="budgets")SB.from("budgets").select("*").then(function(r){if(r&&r.data){var b={};r.data.forEach(function(x){b[x.year]=+x.amount||0;});state.budget=b;renderAll();}});
+    else if(which==="doors")SB.from("doors").select("*").then(function(r){if(r&&r.data&&r.data.length){state.doors=r.data.map(function(x){return {_id:x.id,num:x.num,maker:x.maker,supplier:x.supplier,serial:x.serial,loc:x.loc,svc_phone:x.svc_phone,contact:x.contact,mgr_phone:x.mgr_phone,email:x.email,notes:x.notes};});renderAll();}});
   }
   (function(){
     if(!(window.supabase&&window.SUPA_URL&&window.SUPA_KEY)){ SUPAMODE=false; setStatus("local"); return; }
     try{ SB=window.supabase.createClient(window.SUPA_URL,window.SUPA_KEY); window.__SB=SB; }catch(e){ SB=null; }
     if(!SB){ SUPAMODE=false; setStatus("local"); return; }
     SUPAMODE=true; setStatus("connecting");
-    supaRefetch("items");supaRefetch("records");supaRefetch("departments");supaRefetch("distributors");supaRefetch("water");supaRefetch("ac");supaRefetch("budgets");
+    supaRefetch("items");supaRefetch("records");supaRefetch("departments");supaRefetch("distributors");supaRefetch("water");supaRefetch("ac");supaRefetch("budgets");supaRefetch("doors");
     try{
       SB.channel("galam-rt")
         .on("postgres_changes",{event:"*",schema:"public",table:"items"},function(){supaRefetch("items");})
@@ -1420,6 +1449,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
         .on("postgres_changes",{event:"*",schema:"public",table:"water_devices"},function(){supaRefetch("water");})
         .on("postgres_changes",{event:"*",schema:"public",table:"air_conditioners"},function(){supaRefetch("ac");})
         .on("postgres_changes",{event:"*",schema:"public",table:"budgets"},function(){supaRefetch("budgets");})
+        .on("postgres_changes",{event:"*",schema:"public",table:"doors"},function(){supaRefetch("doors");})
         .subscribe();
     }catch(e){}
   })();
