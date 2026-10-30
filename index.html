@@ -150,6 +150,10 @@ td{border-bottom:1px solid var(--line)}
 tr:last-child td{border-bottom:none}
 td.num{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
 .chip{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.76rem;font-weight:600;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.row-armed td{opacity:.6;text-decoration:line-through}
+.row-armed td:last-child{text-decoration:none;opacity:1}
+.del-armed{background:var(--crit);color:#fff;border:none;border-radius:8px;padding:4px 11px;font-weight:700;font-size:.8rem;cursor:pointer;white-space:nowrap}
+.del-cancel{background:transparent;border:none;color:var(--muted);font-size:1.15rem;cursor:pointer;margin-inline-start:6px;vertical-align:middle}
 .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.74rem;font-weight:700;white-space:nowrap}
 .pill.ok{background:rgba(47,122,79,.14);color:var(--good)}
 .pill.low{background:rgba(181,132,42,.16);color:var(--warn)}
@@ -1140,7 +1144,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var tb=$("waterRows");if(!tb)return;
     if(list.length===0){tb.innerHTML='<tr><td colspan="5" class="empty">'+(state.water.length?"לא נמצאו מכשירים":"אין מכשירים עדיין")+'</td></tr>';return;}
     tb.innerHTML=list.map(function(w){
-      return '<tr><td class="num">'+esc(w.serial||"")+'</td><td>'+esc(w.loc||"")+'</td><td>'+esc(w.model||"—")+'</td><td style="color:var(--muted)">'+esc(w.note||"—")+'</td><td><button class="del" data-del-water="'+esc(w._id)+'" aria-label="מחיקה">×</button></td></tr>';
+      return '<tr'+(isArmed("water",w._id)?' class="row-armed"':'')+'><td class="num">'+esc(w.serial||"")+'</td><td>'+esc(w.loc||"")+'</td><td>'+esc(w.model||"—")+'</td><td style="color:var(--muted)">'+esc(w.note||"—")+'</td><td>'+delBtn("water",w._id)+'</td></tr>';
     }).join("");
   }
   function setDepts(list){
@@ -1156,6 +1160,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   // main tabs: kibud / pallets
   $("mainrail").addEventListener("click",function(ev){
     var t=ev.target.closest(".tab");if(!t)return;
+    armedDelete=null;
     var m=t.getAttribute("data-main");
     document.querySelectorAll("#mainrail .tab").forEach(function(b){b.setAttribute("aria-selected",b===t?"true":"false");});
     $("main-kibud").hidden=(m!=="kibud");
@@ -1229,13 +1234,16 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   $("wLocF").addEventListener("change",renderWater);
   $("wModelF").addEventListener("change",renderWater);
 
+  var armedDelete=null;
+  function isArmed(type,id){return armedDelete===(type+":"+id);}
+  function delBtn(type,id){var k=type+":"+esc(id);if(isArmed(type,id)){return '<button class="del-armed" data-delx="'+k+'">מחק ✓</button><button class="del-cancel" data-delcancel="1" aria-label="ביטול">↩</button>';}return '<button class="del" data-delx="'+k+'" aria-label="מחיקה">×</button>';}
+  function doDelete(k){var i=k.indexOf(":"),type=k.slice(0,i),id=k.slice(i+1);if(type==="ac")delAc(id);else if(type==="water")delWater(id);else if(type==="door")delDoor(id);}
   document.addEventListener("click",function(ev){
     var t=ev.target;
     var rid=t.getAttribute&&t.getAttribute("data-del-rec"); if(rid){delRecord(rid);return;}
     var iid=t.getAttribute&&t.getAttribute("data-del-item"); if(iid){delItem(iid);return;}
-    var wid=t.getAttribute&&t.getAttribute("data-del-water"); if(wid){delWater(wid);return;}
-    var aid=t.getAttribute&&t.getAttribute("data-del-ac"); if(aid){delAc(aid);return;}
-    var did=t.getAttribute&&t.getAttribute("data-del-door"); if(did){delDoor(did);return;}
+    var dx2=t.getAttribute&&t.getAttribute("data-delx"); if(dx2){ if(armedDelete===dx2){armedDelete=null;doDelete(dx2);} else {armedDelete=dx2;renderAll();toast('לחץ "מחק ✓" שוב למחיקה סופית');} return; }
+    var dcx=t.getAttribute&&t.getAttribute("data-delcancel"); if(dcx){armedDelete=null;renderAll();return;}
     var dn=t.getAttribute&&t.getAttribute("data-del-dept"); if(dn){setDepts(state.depts.filter(function(d){return d!==dn;}));return;}
     var dx=t.getAttribute&&t.getAttribute("data-del-distrib"); if(dx){setDistributors(state.distributors.filter(function(d){return d!==dx;}));return;}
     var sid=t.getAttribute&&t.getAttribute("data-supply-btn");
@@ -1288,7 +1296,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var tb=$("acRows"); if(!tb)return;
     if(list.length===0){tb.innerHTML='<tr><td colspan="5" class="empty">'+(state.ac.length?"לא נמצאו מזגנים":"אין מזגנים")+'</td></tr>';return;}
     tb.innerHTML=list.map(function(a){
-      return '<tr><td class="num">'+esc(a.num)+'</td><td>'+esc(a.loc)+'</td><td>'+esc(a.model||"—")+'</td><td><span class="chip">'+esc(a.type||"—")+'</span></td><td><button class="del" data-del-ac="'+esc(a._id)+'" aria-label="מחיקה">×</button></td></tr>';
+      return '<tr'+(isArmed("ac",a._id)?' class="row-armed"':'')+'><td class="num">'+esc(a.num)+'</td><td>'+esc(a.loc)+'</td><td>'+esc(a.model||"—")+'</td><td><span class="chip">'+esc(a.type||"—")+'</span></td><td>'+delBtn("ac",a._id)+'</td></tr>';
     }).join("");
   }
   if($("acSearch"))$("acSearch").addEventListener("input",renderAC);
@@ -1345,12 +1353,12 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var tb=$("doorsRows");if(!tb)return;
     if(list.length===0){tb.innerHTML='<tr><td colspan="10" class="empty">לא נמצאו דלתות</td></tr>';return;}
     tb.innerHTML=list.map(function(d){
-      return '<tr><td>'+esc(d.loc||"")+'</td><td class="num">'+esc(d.num||"")+'</td><td>'+esc(d.maker||"—")+'</td><td><span class="chip">'+esc(d.supplier||"—")+'</span></td><td class="num">'+esc(d.serial||"")+'</td>'+
+      return '<tr'+(isArmed("door",d._id)?' class="row-armed"':'')+'><td>'+esc(d.loc||"")+'</td><td class="num">'+esc(d.num||"")+'</td><td>'+esc(d.maker||"—")+'</td><td><span class="chip">'+esc(d.supplier||"—")+'</span></td><td class="num">'+esc(d.serial||"")+'</td>'+
         '<td class="num">'+(d.svc_phone?'<a href="'+telHref(d.svc_phone)+'" style="color:var(--accent);text-decoration:none;white-space:nowrap">'+esc(d.svc_phone)+'</a>':'—')+'</td>'+
         '<td>'+esc(d.contact||"—")+'</td>'+
         '<td>'+(d.email?'<a href="mailto:'+esc(d.email)+'" style="color:var(--accent);text-decoration:none">'+esc(d.email)+'</a>':'—')+'</td>'+
         '<td style="font-size:.82rem;color:var(--muted);max-width:220px">'+esc(d.notes||"")+'</td>'+
-        '<td><button class="del" data-del-door="'+esc(d._id)+'" aria-label="מחיקה">×</button></td></tr>';
+        '<td>'+delBtn("door",d._id)+'</td></tr>';
     }).join("");
   }
   async function exportDoors(){
