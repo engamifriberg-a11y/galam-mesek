@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0071e3">
+<title>פתיחת קריאת שירות — משק גלעם</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Heebo:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbfbfd;--surface:#fff;--surface-2:#f5f5f7;--ink:#1d1d1f;--muted:#6e6e73;--line:#e8e8ed;--accent:#0071e3;--good:#34c759;--crit:#ff3b30;--r:20px;--shadow:0 1px 2px rgba(0,0,0,.03),0 10px 30px rgba(0,0,0,.07);--fd:"Heebo",system-ui,sans-serif;--fb:"Assistant",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0b0f;--surface:#1c1c1e;--surface-2:#2c2c2e;--ink:#f5f5f7;--muted:#98989d;--line:#38383a;--accent:#0a84ff;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--fb);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 16px 40px}
+.top{width:100%;max-width:560px;text-align:center;padding:30px 0 18px}
+.top .icon{font-size:2.6rem}
+.top h1{font-family:var(--fd);font-weight:800;font-size:1.5rem;margin:10px 0 4px}
+.top p{color:var(--muted);margin:0;font-size:.98rem}
+.card{width:100%;max-width:560px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:22px}
+label{display:block;font-weight:700;font-size:.92rem;margin:14px 0 6px}
+label:first-child{margin-top:0}
+input,select,textarea{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:var(--surface-2);color:var(--ink);font-family:var(--fb);font-size:1.02rem}
+textarea{min-height:92px;resize:vertical}
+.kinds{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.kind{display:flex;align-items:center;justify-content:center;gap:7px;padding:14px;border:2px solid var(--line);border-radius:14px;background:var(--surface-2);cursor:pointer;font-weight:700;user-select:none;transition:.15s}
+.kind.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}
+.btn{width:100%;margin-top:22px;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--accent),#0a84ff);color:#fff;font-weight:800;font-family:var(--fd);font-size:1.1rem;cursor:pointer;box-shadow:0 6px 16px rgba(0,113,227,.28);transition:transform .12s}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.6;cursor:default}
+.hint{min-height:20px;margin-top:12px;text-align:center;font-weight:600}
+.ok{color:var(--good)}.err{color:var(--crit)}
+.done{text-align:center;padding:18px 8px}
+.done .big{font-size:3rem}
+.done h2{font-family:var(--fd);margin:8px 0 6px}
+.done p{color:var(--muted);margin:0 0 20px}
+.hidden{display:none}
+.foot{color:var(--muted);font-size:.82rem;margin-top:22px;text-align:center}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="icon">🛠️</div>
+    <h1>פתיחת קריאת שירות</h1>
+    <p>משק גלעם — דווחו על תקלה ונטפל בה</p>
+  </div>
+
+  <div class="card" id="formCard">
+    <form id="f">
+      <label for="who">השם שלך</label>
+      <input id="who" type="text" placeholder="שם מלא" required autocomplete="name">
+
+      <label>מה התקלקל?</label>
+      <div class="kinds" id="kinds">
+        <div class="kind on" data-k="מזגן">❄️ מזגן</div>
+        <div class="kind" data-k="דלת">🚪 דלת מהירה</div>
+        <div class="kind" data-k="תמי4">💧 תמי4 / מים</div>
+        <div class="kind" data-k="כללי">🔧 כללי</div>
+      </div>
+
+      <label for="loc">מיקום התקלה</label>
+      <input id="loc" type="text" placeholder="לדוגמה: חדר אוכל, מחלקה 700…">
+
+      <label for="desc">תיאור התקלה</label>
+      <textarea id="desc" placeholder="ספרו בקצרה מה קרה"></textarea>
+
+      <button class="btn" id="send" type="submit">שליחת קריאה</button>
+      <div class="hint" id="hint"></div>
+    </form>
+  </div>
+
+  <div class="card hidden" id="doneCard">
+    <div class="done">
+      <div class="big">✅</div>
+      <h2>הקריאה נשלחה!</h2>
+      <p>הקריאה התקבלה במשק ונטפל בה בהקדם.</p>
+      <button class="btn" id="again" type="button" style="max-width:260px;margin:0 auto">פתיחת קריאה נוספת</button>
+    </div>
+  </div>
+
+  <div class="foot">כל הזכויות שמורות © עמי פרייברג</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+  var SUPA_URL="https://zrmjfxztaeuuvdqhwdzm.supabase.co";
+  var SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWpmeHp0YWV1dXZkcWh3ZHptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NDA3MTksImV4cCI6MjEwODUxNjcxOX0.ENmZvUV66S7AH7bZF3EEXzYzgbgGewfMgSJPiKQMMMY";
+  var SB=null; try{ SB=window.supabase.createClient(SUPA_URL,SUPA_KEY); }catch(e){ SB=null; }
+  var $=function(id){return document.getElementById(id);};
+  var kind="מזגן";
+  $("kinds").addEventListener("click",function(ev){
+    var el=ev.target.closest(".kind"); if(!el)return;
+    kind=el.getAttribute("data-k");
+    Array.prototype.forEach.call(document.querySelectorAll(".kind"),function(k){k.classList.toggle("on",k===el);});
+  });
+  function pad(n){return (n<10?"0":"")+n;}
+  $("f").addEventListener("submit",function(ev){
+    ev.preventDefault();
+    var who=($("who").value||"").trim();
+    if(!who){ $("hint").className="hint err"; $("hint").textContent="נא למלא שם"; $("who").focus(); return; }
+    if(!SB){ $("hint").className="hint err"; $("hint").textContent="אין חיבור לשרת, נסו שוב מאוחר יותר"; return; }
+    var now=new Date();
+    var rec={ id:"c"+Date.now()+Math.floor(Math.random()*1000), who:who, kind:kind,
+      loc:($("loc").value||"").trim(), status:"חדש",
+      cdate:now.getFullYear()+"-"+pad(now.getMonth()+1)+"-"+pad(now.getDate()),
+      ctime:pad(now.getHours())+":"+pad(now.getMinutes()),
+      descr:($("desc").value||"").trim(), ts:Date.now() };
+    $("send").disabled=true; $("hint").className="hint"; $("hint").textContent="שולח…";
+    SB.from("calls").insert(rec).then(function(r){
+      $("send").disabled=false;
+      if(r&&r.error){ $("hint").className="hint err"; $("hint").textContent="שליחה נכשלה — נסו שוב"; return; }
+      $("formCard").classList.add("hidden"); $("doneCard").classList.remove("hidden");
+      $("f").reset(); window.scrollTo(0,0);
+    },function(){ $("send").disabled=false; $("hint").className="hint err"; $("hint").textContent="שליחה נכשלה — נסו שוב"; });
+  });
+  $("again").addEventListener("click",function(){
+    $("doneCard").classList.add("hidden"); $("formCard").classList.remove("hidden");
+    $("hint").textContent=""; kind="מזגן";
+    Array.prototype.forEach.call(document.querySelectorAll(".kind"),function(k){k.classList.toggle("on",k.getAttribute("data-k")==="מזגן");});
+    $("who").focus();
+  });
+})();
+</script>
+</body>
+</html>
