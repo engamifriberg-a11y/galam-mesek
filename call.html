@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Heebo:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fbfbfd;--surface:#fff;--surface-2:#f5f5f7;--ink:#1d1d1f;--muted:#6e6e73;--line:#e8e8ed;--accent:#0071e3;--good:#34c759;--crit:#ff3b30;--r:20px;--shadow:0 1px 2px rgba(0,0,0,.03),0 10px 30px rgba(0,0,0,.07);--fd:"Heebo",system-ui,sans-serif;--fb:"Assistant",system-ui,sans-serif}
+:root{--bg:#fbfbfd;--surface:#fff;--surface-2:#f5f5f7;--ink:#1d1d1f;--muted:#6e6e73;--line:#e8e8ed;--accent:#0071e3;--good:#34c759;--warn:#ff9f0a;--crit:#ff3b30;--r:20px;--shadow:0 1px 2px rgba(0,0,0,.03),0 10px 30px rgba(0,0,0,.07);--fd:"Heebo",system-ui,sans-serif;--fb:"Assistant",system-ui,sans-serif}
 @media (prefers-color-scheme:dark){:root{--bg:#0b0b0f;--surface:#1c1c1e;--surface-2:#2c2c2e;--ink:#f5f5f7;--muted:#98989d;--line:#38383a;--accent:#0a84ff;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4)}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--fb);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 16px 40px}
@@ -27,14 +27,27 @@ textarea{min-height:92px;resize:vertical}
 .btn{width:100%;margin-top:22px;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--accent),#0a84ff);color:#fff;font-weight:800;font-family:var(--fd);font-size:1.1rem;cursor:pointer;box-shadow:0 6px 16px rgba(0,113,227,.28);transition:transform .12s}
 .btn:active{transform:translateY(1px)}
 .btn[disabled]{opacity:.6;cursor:default}
+.btn.sec{background:var(--surface-2);color:var(--accent);box-shadow:none;border:1px solid var(--line)}
 .hint{min-height:20px;margin-top:12px;text-align:center;font-weight:600}
 .ok{color:var(--good)}.err{color:var(--crit)}
-.done{text-align:center;padding:18px 8px}
+.done{text-align:center;padding:12px 8px}
 .done .big{font-size:3rem}
 .done h2{font-family:var(--fd);margin:8px 0 6px}
-.done p{color:var(--muted);margin:0 0 20px}
+.done p{color:var(--muted);margin:0 0 14px}
+.ticket{display:inline-block;background:var(--surface-2);border:1px dashed var(--accent);border-radius:14px;padding:12px 22px;margin:4px 0 18px}
+.ticket .l{font-size:.8rem;color:var(--muted);font-weight:700}
+.ticket .n{font-family:var(--fd);font-weight:800;font-size:1.9rem;color:var(--accent);line-height:1}
 .hidden{display:none}
+.link{display:block;text-align:center;margin-top:16px;color:var(--accent);font-weight:700;text-decoration:none;cursor:pointer}
 .foot{color:var(--muted);font-size:.82rem;margin-top:22px;text-align:center}
+.badge{display:inline-block;padding:7px 16px;border-radius:999px;font-weight:800;font-family:var(--fd);font-size:1.05rem}
+.steps{display:flex;align-items:center;justify-content:center;gap:0;margin:16px 0 6px}
+.step{flex:1;text-align:center;font-size:.8rem;font-weight:700;color:var(--muted);position:relative}
+.step .dot{width:26px;height:26px;border-radius:50%;background:var(--surface-2);border:2px solid var(--line);margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:.8rem}
+.step.done .dot{background:var(--good);border-color:var(--good);color:#fff}
+.step.cur .dot{background:var(--accent);border-color:var(--accent);color:#fff}
+.row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.95rem}
+.row .k{color:var(--muted);font-weight:700}
 </style>
 </head>
 <body>
@@ -44,11 +57,11 @@ textarea{min-height:92px;resize:vertical}
     <p>משק גלעם — דווחו על תקלה ונטפל בה</p>
   </div>
 
+  <!-- FORM -->
   <div class="card" id="formCard">
     <form id="f">
       <label for="who">השם שלך</label>
       <input id="who" type="text" placeholder="שם מלא" required autocomplete="name">
-
       <label>מה התקלקל?</label>
       <div class="kinds" id="kinds">
         <div class="kind on" data-k="מזגן">❄️ מזגן</div>
@@ -56,25 +69,38 @@ textarea{min-height:92px;resize:vertical}
         <div class="kind" data-k="תמי4">💧 תמי4 / מים</div>
         <div class="kind" data-k="כללי">🔧 כללי</div>
       </div>
-
       <label for="loc">מיקום התקלה</label>
       <input id="loc" type="text" placeholder="לדוגמה: חדר אוכל, מחלקה 700…">
-
       <label for="desc">תיאור התקלה</label>
       <textarea id="desc" placeholder="ספרו בקצרה מה קרה"></textarea>
-
       <button class="btn" id="send" type="submit">שליחת קריאה</button>
       <div class="hint" id="hint"></div>
     </form>
+    <a class="link" id="toTrack">כבר פתחת קריאה? מעקב אחר סטטוס ›</a>
   </div>
 
+  <!-- DONE -->
   <div class="card hidden" id="doneCard">
     <div class="done">
       <div class="big">✅</div>
       <h2>הקריאה נשלחה!</h2>
-      <p>הקריאה התקבלה במשק ונטפל בה בהקדם.</p>
-      <button class="btn" id="again" type="button" style="max-width:260px;margin:0 auto">פתיחת קריאה נוספת</button>
+      <div class="ticket"><div class="l">מספר הקריאה שלך</div><div class="n" id="doneNum">#—</div></div>
+      <p>שמרו את המספר כדי לעקוב אחרי הטיפול בתקלה.</p>
+      <button class="btn" id="trackMine" type="button">מעקב אחר הקריאה</button>
+      <button class="btn sec" id="again" type="button">פתיחת קריאה נוספת</button>
     </div>
+  </div>
+
+  <!-- TRACK -->
+  <div class="card hidden" id="trackCard">
+    <h2 style="font-family:var(--fd);margin:0 0 4px">מעקב אחר קריאה</h2>
+    <p style="color:var(--muted);margin:0 0 14px">הזינו את מספר הקריאה שקיבלתם</p>
+    <label for="tnum">מספר קריאה</label>
+    <input id="tnum" type="number" inputmode="numeric" placeholder="לדוגמה: 7">
+    <button class="btn" id="tbtn" type="button">בדיקת סטטוס</button>
+    <div class="hint" id="thint"></div>
+    <div id="tres" class="hidden" style="margin-top:14px"></div>
+    <a class="link" id="toForm">‹ חזרה לפתיחת קריאה</a>
   </div>
 
   <div class="foot">כל הזכויות שמורות © עמי פרייברג</div>
@@ -86,18 +112,22 @@ textarea{min-height:92px;resize:vertical}
   var SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWpmeHp0YWV1dXZkcWh3ZHptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NDA3MTksImV4cCI6MjEwODUxNjcxOX0.ENmZvUV66S7AH7bZF3EEXzYzgbgGewfMgSJPiKQMMMY";
   var SB=null; try{ SB=window.supabase.createClient(SUPA_URL,SUPA_KEY); }catch(e){ SB=null; }
   var $=function(id){return document.getElementById(id);};
-  var kind="מזגן";
+  var kind="מזגן", lastNum=null;
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+  function pad(n){return (n<10?"0":"")+n;}
+  function show(id){["formCard","doneCard","trackCard"].forEach(function(x){$(x).classList.toggle("hidden",x!==id);});window.scrollTo(0,0);}
+
   $("kinds").addEventListener("click",function(ev){
     var el=ev.target.closest(".kind"); if(!el)return;
     kind=el.getAttribute("data-k");
     Array.prototype.forEach.call(document.querySelectorAll(".kind"),function(k){k.classList.toggle("on",k===el);});
   });
-  function pad(n){return (n<10?"0":"")+n;}
+
   $("f").addEventListener("submit",function(ev){
     ev.preventDefault();
     var who=($("who").value||"").trim();
     if(!who){ $("hint").className="hint err"; $("hint").textContent="נא למלא שם"; $("who").focus(); return; }
-    if(!SB){ $("hint").className="hint err"; $("hint").textContent="אין חיבור לשרת, נסו שוב מאוחר יותר"; return; }
+    if(!SB){ $("hint").className="hint err"; $("hint").textContent="אין חיבור לשרת, נסו שוב"; return; }
     var now=new Date();
     var rec={ id:"c"+Date.now()+Math.floor(Math.random()*1000), who:who, kind:kind,
       loc:($("loc").value||"").trim(), status:"חדש",
@@ -105,19 +135,58 @@ textarea{min-height:92px;resize:vertical}
       ctime:pad(now.getHours())+":"+pad(now.getMinutes()),
       descr:($("desc").value||"").trim(), ts:Date.now() };
     $("send").disabled=true; $("hint").className="hint"; $("hint").textContent="שולח…";
-    SB.from("calls").insert(rec).then(function(r){
+    SB.from("calls").insert(rec).select().then(function(r){
       $("send").disabled=false;
       if(r&&r.error){ $("hint").className="hint err"; $("hint").textContent="שליחה נכשלה — נסו שוב"; return; }
-      $("formCard").classList.add("hidden"); $("doneCard").classList.remove("hidden");
-      $("f").reset(); window.scrollTo(0,0);
+      lastNum=(r&&r.data&&r.data[0]&&r.data[0].num!=null)?r.data[0].num:null;
+      $("doneNum").textContent=lastNum!=null?("#"+lastNum):"נשלחה";
+      $("hint").textContent=""; $("f").reset(); show("doneCard");
     },function(){ $("send").disabled=false; $("hint").className="hint err"; $("hint").textContent="שליחה נכשלה — נסו שוב"; });
   });
+
   $("again").addEventListener("click",function(){
-    $("doneCard").classList.add("hidden"); $("formCard").classList.remove("hidden");
-    $("hint").textContent=""; kind="מזגן";
-    Array.prototype.forEach.call(document.querySelectorAll(".kind"),function(k){k.classList.toggle("on",k.getAttribute("data-k")==="מזגן");});
-    $("who").focus();
+    kind="מזגן"; Array.prototype.forEach.call(document.querySelectorAll(".kind"),function(k){k.classList.toggle("on",k.getAttribute("data-k")==="מזגן");});
+    $("hint").textContent=""; show("formCard"); $("who").focus();
   });
+  $("toTrack").addEventListener("click",function(){ $("tres").classList.add("hidden"); $("thint").textContent=""; show("trackCard"); });
+  $("toForm").addEventListener("click",function(){ show("formCard"); });
+  $("trackMine").addEventListener("click",function(){ if(lastNum!=null)$("tnum").value=lastNum; $("tres").classList.add("hidden"); $("thint").textContent=""; show("trackCard"); if(lastNum!=null)doTrack(); });
+
+  function statusColor(s){return s==="טופל"?"var(--good)":s==="בטיפול"?"var(--warn)":"var(--crit)";}
+  function stepsHTML(s){
+    var order=["חדש","בטיפול","טופל"], idx=order.indexOf(s); if(idx<0)idx=0;
+    return '<div class="steps">'+order.map(function(o,i){
+      var cls=i<idx?"step done":i===idx?"step cur":"step";
+      var mark=i<idx?"✓":(i+1);
+      return '<div class="'+cls+'"><div class="dot">'+mark+'</div>'+o+'</div>';
+    }).join("")+'</div>';
+  }
+  function doTrack(){
+    var n=parseInt($("tnum").value,10);
+    if(!n){ $("thint").className="hint err"; $("thint").textContent="הזינו מספר קריאה"; return; }
+    if(!SB){ $("thint").className="hint err"; $("thint").textContent="אין חיבור לשרת"; return; }
+    $("tbtn").disabled=true; $("thint").className="hint"; $("thint").textContent="בודק…"; $("tres").classList.add("hidden");
+    SB.from("calls").select("*").eq("num",n).then(function(r){
+      $("tbtn").disabled=false; $("thint").textContent="";
+      if(r&&r.error){ $("thint").className="hint err"; $("thint").textContent="שגיאה בבדיקה"; return; }
+      var c=r&&r.data&&r.data[0];
+      if(!c){ $("thint").className="hint err"; $("thint").textContent="לא נמצאה קריאה במספר הזה"; return; }
+      $("tres").innerHTML=
+        '<div style="text-align:center;margin-bottom:10px"><span class="badge" style="background:'+statusColor(c.status)+';color:#fff">'+esc(c.status||"חדש")+'</span></div>'+
+        stepsHTML(c.status||"חדש")+
+        '<div style="margin-top:12px">'+
+        '<div class="row"><span class="k">מספר</span><span>#'+esc(c.num)+'</span></div>'+
+        '<div class="row"><span class="k">סוג</span><span>'+esc(c.kind)+'</span></div>'+
+        '<div class="row"><span class="k">מיקום</span><span>'+esc(c.loc||"—")+'</span></div>'+
+        '<div class="row"><span class="k">נפתחה</span><span>'+esc(c.cdate)+' '+esc(c.ctime)+'</span></div>'+
+        '<div class="row"><span class="k">נפתח ע״י</span><span>'+esc(c.who||"—")+'</span></div>'+
+        (c.descr?'<div class="row"><span class="k">תיאור</span><span style="max-width:60%;text-align:left">'+esc(c.descr)+'</span></div>':'')+
+        '</div>';
+      $("tres").classList.remove("hidden");
+    },function(){ $("tbtn").disabled=false; $("thint").className="hint err"; $("thint").textContent="שגיאה בבדיקה"; });
+  }
+  $("tbtn").addEventListener("click",doTrack);
+  $("tnum").addEventListener("keydown",function(e){if(e.key==="Enter")doTrack();});
 })();
 </script>
 </body>

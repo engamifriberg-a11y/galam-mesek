@@ -766,7 +766,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       <select class="selbox" id="callKindF"><option value="">כל הסוגים</option><option>מזגן</option><option>דלת</option><option>תמי4</option><option>כללי</option></select>
     </div>
     <div class="table-scroll">
-      <table><thead><tr><th>תאריך</th><th>שעה</th><th>סוג</th><th>מיקום</th><th>מי פתח</th><th>תיאור</th><th>סטטוס</th><th></th></tr></thead>
+      <table><thead><tr><th>מס׳</th><th>תאריך</th><th>שעה</th><th>סוג</th><th>מיקום</th><th>מי פתח</th><th>תיאור</th><th>סטטוס</th><th></th></tr></thead>
       <tbody id="callsRows"></tbody></table>
     </div>
   </section>
@@ -1144,7 +1144,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function delAc(id){ if(SUPAMODE){ state.ac=state.ac.filter(function(a){return a._id!=id;}); renderAll(); SB.from("air_conditioners").delete().eq("num",id).then(function(){}); } else { state.ac=state.ac.filter(function(a){return a._id!=id;}); saveLocal(); renderAll(); } }
   function addDoor(obj){ if(SUPAMODE){ obj._id="dr"+Date.now(); state.doors.push(obj); renderAll(); SB.from("doors").insert({id:obj._id,num:obj.num,maker:obj.maker,supplier:obj.supplier,serial:obj.serial,loc:obj.loc,svc_phone:obj.svc_phone,contact:obj.contact,mgr_phone:obj.mgr_phone,email:obj.email,notes:obj.notes}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה — ודא שהטבלה doors קיימת");}); } else { obj._id="dr"+Date.now(); state.doors.push(obj); saveLocal(); renderAll(); } }
   function delDoor(id){ if(SUPAMODE){ state.doors=state.doors.filter(function(d){return d._id!=id;}); renderAll(); SB.from("doors").delete().eq("id",id).then(function(){}); } else { state.doors=state.doors.filter(function(d){return d._id!=id;}); saveLocal(); renderAll(); } }
-  function addCall(obj){ if(SUPAMODE){ obj._id="c"+Date.now(); state.calls.push(obj); renderAll(); SB.from("calls").insert({id:obj._id,who:obj.who,kind:obj.kind,loc:obj.loc,status:obj.status,cdate:obj.cdate,ctime:obj.ctime,descr:obj.descr,ts:obj.ts}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה — ודא שהטבלה calls קיימת");}); } else { obj._id="c"+Date.now(); state.calls.push(obj); saveLocal(); renderAll(); } }
+  function addCall(obj){ if(SUPAMODE){ obj._id="c"+Date.now(); state.calls.push(obj); renderAll(); SB.from("calls").insert({id:obj._id,who:obj.who,kind:obj.kind,loc:obj.loc,status:obj.status,cdate:obj.cdate,ctime:obj.ctime,descr:obj.descr,ts:obj.ts}).select().then(function(r){if(r&&r.error){toast("שמירה בענן נכשלה — ודא שהטבלה calls קיימת");}else if(r&&r.data&&r.data[0]){var cc=state.calls.filter(function(x){return x._id==obj._id;})[0];if(cc){cc.num=r.data[0].num;renderAll();}}}); } else { obj._id="c"+Date.now(); state.calls.push(obj); saveLocal(); renderAll(); } }
   function updateCall(id,patch){ if(SUPAMODE){ var c=state.calls.filter(function(x){return x._id==id;})[0]; if(c){for(var k in patch)c[k]=patch[k];renderAll();} SB.from("calls").update(patch).eq("id",id).then(function(){}); } else { var c=state.calls.filter(function(x){return x._id==id;})[0]; if(c){for(var k in patch)c[k]=patch[k];saveLocal();renderAll();} } }
   function delCall(id){ if(SUPAMODE){ state.calls=state.calls.filter(function(x){return x._id!=id;}); renderAll(); SB.from("calls").delete().eq("id",id).then(function(){}); } else { state.calls=state.calls.filter(function(x){return x._id!=id;}); saveLocal(); renderAll(); } }
   function setBudget(y,amt){ state.budget[y]=amt; renderAll(); if(SUPAMODE){ SB.from("budgets").upsert({year:+y,amount:amt}).then(function(r){if(r&&r.error)toast("שמירת תקציב נכשלה — ודא שהטבלה budgets קיימת ב-Supabase");}); } else { saveLocal(); } }
@@ -1442,9 +1442,9 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var openN=(state.calls||[]).filter(function(c){return c.status!=="טופל";}).length;
     if($("callsSub"))$("callsSub").textContent="סה״כ "+nf((state.calls||[]).length)+" קריאות · "+nf(openN)+" פתוחות";
     var tb=$("callsRows"); if(!tb)return;
-    if(list.length===0){tb.innerHTML='<tr><td colspan="8" class="empty">אין קריאות</td></tr>';return;}
+    if(list.length===0){tb.innerHTML='<tr><td colspan="9" class="empty">אין קריאות</td></tr>';return;}
     tb.innerHTML=list.map(function(c){
-      return '<tr'+(isArmed("call",c._id)?' class="row-armed"':'')+'><td class="num">'+esc(c.cdate||"")+'</td><td class="num">'+esc(c.ctime||"")+'</td><td><span class="chip">'+esc(c.kind||"")+'</span></td><td>'+esc(c.loc||"")+'</td><td>'+esc(c.who||"")+'</td><td style="max-width:240px">'+esc(c.descr||"")+'</td><td>'+callStatusSelect(c)+'</td><td>'+delBtn("call",c._id)+'</td></tr>';
+      return '<tr'+(isArmed("call",c._id)?' class="row-armed"':'')+'><td class="num" style="font-weight:700;color:var(--accent)">'+(c.num!=null?('#'+esc(c.num)):'—')+'</td><td class="num">'+esc(c.cdate||"")+'</td><td class="num">'+esc(c.ctime||"")+'</td><td><span class="chip">'+esc(c.kind||"")+'</span></td><td>'+esc(c.loc||"")+'</td><td>'+esc(c.who||"")+'</td><td style="max-width:240px">'+esc(c.descr||"")+'</td><td>'+callStatusSelect(c)+'</td><td>'+delBtn("call",c._id)+'</td></tr>';
     }).join("");
   }
   (function(){ var n=new Date(); if($("cDate"))$("cDate").value=n.toISOString().slice(0,10); if($("cTime"))$("cTime").value=n.toTimeString().slice(0,5); })();
@@ -1517,7 +1517,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     else if(which==="ac")SB.from("air_conditioners").select("*").then(function(r){if(!(r&&r.data))return;
       if(r.data.length){state.ac=r.data.map(function(x){return {_id:x.num,num:x.num,loc:x.loc,model:x.model,type:x.type};});renderAll();}
       else if(!supaSeeded.ac&&state.ac&&state.ac.length){supaSeeded.ac=1;SB.from("air_conditioners").upsert(state.ac.map(function(a){return {num:a.num,loc:a.loc,model:a.model,type:a.type};})).then(function(){supaRefetch("ac");});}});
-    else if(which==="calls")SB.from("calls").select("*").then(function(r){if(r&&r.data){state.calls=r.data.map(function(x){return {_id:x.id,who:x.who,kind:x.kind,loc:x.loc,status:x.status,cdate:x.cdate,ctime:x.ctime,descr:x.descr,ts:+x.ts||0};});renderAll();}});
+    else if(which==="calls")SB.from("calls").select("*").then(function(r){if(r&&r.data){state.calls=r.data.map(function(x){return {_id:x.id,who:x.who,kind:x.kind,loc:x.loc,status:x.status,cdate:x.cdate,ctime:x.ctime,descr:x.descr,ts:+x.ts||0,num:(x.num!=null?x.num:null)};});renderAll();}});
     else if(which==="budgets")SB.from("budgets").select("*").then(function(r){if(r&&r.data){var b={};r.data.forEach(function(x){b[x.year]=+x.amount||0;});state.budget=b;renderAll();}});
     else if(which==="doors")SB.from("doors").select("*").then(function(r){if(!(r&&r.data))return;
       if(r.data.length){state.doors=r.data.map(function(x){return {_id:x.id,num:x.num,maker:x.maker,supplier:x.supplier,serial:x.serial,loc:x.loc,svc_phone:x.svc_phone,contact:x.contact,mgr_phone:x.mgr_phone,email:x.email,notes:x.notes};});renderAll();}
