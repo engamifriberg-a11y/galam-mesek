@@ -19,10 +19,10 @@ img{max-width:100%}[hidden]{display:none!important}
 <style>
 /* Layout: tabbed operations console — sticky header + tab rail, each tab a working view. Ground: paper-ledger warmth, ink-blue accent, RTL, tabular figures everywhere counts line up. */
 :root{
-  --bg:#f7f8fb;--surface:#ffffff;--surface-2:#f0f2f7;--ink:#2a3340;--muted:#7c8795;
-  --line:#eaedf3;--accent:#5a7fbf;--accent-2:#5aa79b;--accent-soft:#edf1f9;
+  --bg:#f4f6fb;--surface:#ffffff;--surface-2:#eef1f8;--ink:#1b2432;--muted:#697587;
+  --line:#e4e9f2;--accent:#4361ee;--accent-2:#0ea5a0;--accent-soft:#eaeffe;
   --warm:#e0894f;--warm-soft:#fbefe4;
-  --good:#4f9d7d;--warn:#c99a52;--crit:#cf7363;
+  --good:#2ca66a;--warn:#d4a23a;--crit:#e05c48;
   --shadow:0 1px 2px rgba(42,51,64,.03),0 6px 20px rgba(42,51,64,.05);
   --r:18px;
   --font-display:"Heebo",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -30,15 +30,15 @@ img{max-width:100%}[hidden]{display:none!important}
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#141922;--surface:#1d2430;--surface-2:#262e3c;--ink:#e6eaf1;--muted:#99a2b2;
-  --line:#2d3644;--accent:#7f9fd6;--accent-2:#6fbdb0;--accent-soft:#232f44;
+  --bg:#121722;--surface:#1b2230;--surface-2:#232c3c;--ink:#e8ecf4;--muted:#9aa5b6;
+  --line:#2c3545;--accent:#7d97f4;--accent-2:#45c3b8;--accent-soft:#222f49;
   --warm:#e0944f;--warm-soft:#33281d;
   --good:#6cc29b;--warn:#d4ac6a;--crit:#df8e7f;
   --shadow:0 1px 2px rgba(0,0,0,.28),0 8px 24px rgba(0,0,0,.28);color-scheme:dark;
 }}
 :root[data-theme="dark"]{
-  --bg:#141922;--surface:#1d2430;--surface-2:#262e3c;--ink:#e6eaf1;--muted:#99a2b2;
-  --line:#2d3644;--accent:#7f9fd6;--accent-2:#6fbdb0;--accent-soft:#232f44;
+  --bg:#121722;--surface:#1b2230;--surface-2:#232c3c;--ink:#e8ecf4;--muted:#9aa5b6;
+  --line:#2c3545;--accent:#7d97f4;--accent-2:#45c3b8;--accent-soft:#222f49;
   --warm:#e0944f;--warm-soft:#33281d;
   --good:#6cc29b;--warn:#d4ac6a;--crit:#df8e7f;
   --shadow:0 1px 2px rgba(0,0,0,.28),0 8px 24px rgba(0,0,0,.28);color-scheme:dark;
@@ -53,7 +53,7 @@ button,input,select{font-family:var(--font-body);font-size:1rem}
 
 /* header band */
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:#273650}
-.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:linear-gradient(180deg,#273650,#223049);color:#f2f5fa;box-shadow:0 2px 20px rgba(39,54,80,.16)}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:linear-gradient(135deg,#283a6b,#3d357f);color:#f2f5fa;box-shadow:0 2px 20px rgba(39,54,80,.16)}
 .topbar .gutter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:15px}
 .brand{display:flex;align-items:center;gap:10px;line-height:1.05}
 .brand .mark{font-size:1.4rem;flex:none;line-height:1}
@@ -133,7 +133,7 @@ main{max-width:900px;margin:0 auto;padding-block:18px 40px}
 .field label{font-size:.78rem;color:var(--muted);font-weight:600}
 .field input,.field select{width:100%;min-width:0;max-width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)}
 .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
-.btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px 16px;font-weight:700;font-family:var(--font-display)}
+.btn{background:linear-gradient(135deg,var(--accent),#5b73f0);color:#fff;border:none;border-radius:10px;padding:11px 16px;font-weight:700;font-family:var(--font-display);box-shadow:0 4px 12px rgba(67,97,238,.22);cursor:pointer;transition:transform .12s,box-shadow .2s}.btn:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(67,97,238,.3)}.btn:active{transform:translateY(0)}
 .btn:active{transform:translateY(1px)}
 .btn.block{width:100%}
 .btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
@@ -141,7 +141,7 @@ main{max-width:900px;margin:0 auto;padding-block:18px 40px}
 /* tables */
 .toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:11px}
 .search{flex:1;min-width:140px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
-.selbox{padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.selbox{padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow);max-width:200px;min-width:0;flex:0 1 auto;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
 .table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
 table{width:100%;border-collapse:collapse;min-width:480px}
 th,td{text-align:right;padding:11px 13px;font-size:.9rem}
@@ -183,7 +183,7 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
 .wx-day .t{font-size:.82rem;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
 .wx-day .t .lo{color:var(--muted);font-weight:600;margin-inline-start:4px}
 
-.ac-contacts{background:linear-gradient(135deg,#273650,#223049);color:#f2f5fa;border-radius:var(--r);padding:18px;margin-bottom:20px;box-shadow:var(--shadow)}
+.ac-contacts{background:linear-gradient(135deg,#283a6b,#3d357f);color:#f2f5fa;border-radius:var(--r);padding:18px;margin-bottom:20px;box-shadow:var(--shadow)}
 .ac-ch{font-family:var(--font-display);font-weight:800;font-size:1.1rem;margin-bottom:14px}
 .ac-phones{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .ac-phone{display:flex;flex-direction:column;gap:3px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:12px 14px;text-decoration:none;color:#f2f5fa;transition:background .2s}
@@ -621,11 +621,12 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     </div>
     <div class="toolbar">
       <input class="search" id="drSearch" placeholder="חיפוש מספר / דגם / מיקום / איש קשר…">
+      <select class="selbox" id="drLoc"><option value="">כל המיקומים</option></select>
       <select class="selbox" id="drSupplier"><option value="">כל הספקים</option></select>
       <select class="selbox" id="drMaker"><option value="">כל היצרנים</option></select>
     </div>
     <div class="table-scroll">
-      <table><thead><tr><th>מספר גלעם</th><th>יצרן</th><th>ספק</th><th>דגם / מספר</th><th>מיקום</th><th>טלפון שירות</th><th>איש קשר</th><th>אימייל</th><th>הערות</th></tr></thead>
+      <table><thead><tr><th>מיקום</th><th>מספר גלעם</th><th>יצרן</th><th>ספק</th><th>דגם / מספר</th><th>טלפון שירות</th><th>איש קשר</th><th>אימייל</th><th>הערות</th></tr></thead>
       <tbody id="doorsRows"></tbody></table>
     </div>
     <h2 class="view-title" style="font-size:1.25rem;margin-top:28px">פרטי אנשי קשר — ספקי הדלתות</h2>
@@ -932,7 +933,8 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
       rec._id="r"+Date.now()+Math.floor(Math.random()*1000);
       if(item){item.stock=Math.max(0,(item.stock||0)-rec.qty);}
       state.records.push(rec); renderAll();
-      SB.from("records").insert({id:rec._id,date:rec.date,dept:rec.dept,item:rec.item,qty:rec.qty,"by":rec.by||"",note:rec.note||""}).then(function(){});
+      try{saveLocal();}catch(e){}
+      SB.from("records").insert({id:rec._id,date:rec.date,dept:rec.dept,item:rec.item,qty:rec.qty,"by":rec.by||"",note:rec.note||""}).then(function(r){ if(r&&r.error){ try{saveLocal();}catch(e){} toast("שמירה בענן נכשלה — נשמר במכשיר. ודא שהטבלאות הוקמו ב-Supabase"); } });
       if(item&&item._id)SB.from("items").update({stock:item.stock}).eq("id",item._id).then(function(){});
     }else{
       rec._id="L"+Date.now(); state.live.push(rec);
@@ -1033,6 +1035,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     });
     var total=entries.reduce(function(a,e){return a+e.qty;},0);
     $("distHint").innerHTML='<span style="color:var(--good)">נרשמו '+nf(entries.length)+' פריטים ('+nf(total)+' יח׳) ל'+esc(dept)+(by?(" · "+esc(by)):"")+'</span>';
+    toast("נשמרו "+nf(entries.length)+" פריטים ✓");
     $("distItems").querySelectorAll("input[data-qi]").forEach(function(i){i.value="";});
     $("dNote").value="";
   });
@@ -1140,6 +1143,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var sups=DCONTACTS.map(function(c){return c.supplier;});
     DOORS.forEach(function(d){if(d.supplier&&sups.indexOf(d.supplier)<0)sups.push(d.supplier);});
     var mk={}; DOORS.forEach(function(d){if(d.maker)mk[d.maker]=1;});
+    var lSel=$("drLoc"); if(lSel){var dlocs={};DOORS.forEach(function(d){if(d.loc)dlocs[d.loc]=1;});var lcur=lSel.value;lSel.innerHTML='<option value="">כל המיקומים</option>'+Object.keys(dlocs).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(l){return '<option>'+esc(l)+'</option>';}).join("");lSel.value=lcur;}
     if(sSel)sSel.innerHTML='<option value="">כל הספקים</option>'+sups.map(function(s){return '<option>'+esc(s)+'</option>';}).join("");
     if(mSel)mSel.innerHTML='<option value="">כל היצרנים</option>'+Object.keys(mk).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(m){return '<option>'+esc(m)+'</option>';}).join("");
     var ce=$("doorsContacts");
@@ -1159,18 +1163,19 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     renderDoors();
   }
   function renderDoors(){
-    var q=($("drSearch").value||"").trim(),sup=$("drSupplier").value,mk=$("drMaker").value;
+    var q=($("drSearch").value||"").trim(),sup=$("drSupplier").value,mk=$("drMaker").value,dloc=($("drLoc")?$("drLoc").value:"");
     var list=DOORS.filter(function(d){
       if(q && (d.num||"").indexOf(q)<0 && (d.serial||"").indexOf(q)<0 && (d.loc||"").indexOf(q)<0 && (d.contact||"").indexOf(q)<0 && (d.svc_phone||"").indexOf(q)<0)return false;
       if(sup&&d.supplier!==sup)return false;
       if(mk&&d.maker!==mk)return false;
+      if(dloc&&d.loc!==dloc)return false;
       return true;
     });
     if($("doorsSub"))$("doorsSub").textContent="רשימת הדלתות המהירות — "+nf(list.length)+" מתוך "+nf(DOORS.length)+" דלתות.";
     var tb=$("doorsRows");if(!tb)return;
     if(list.length===0){tb.innerHTML='<tr><td colspan="9" class="empty">לא נמצאו דלתות</td></tr>';return;}
     tb.innerHTML=list.map(function(d){
-      return '<tr><td class="num">'+esc(d.num||"")+'</td><td>'+esc(d.maker||"—")+'</td><td><span class="chip">'+esc(d.supplier||"—")+'</span></td><td class="num">'+esc(d.serial||"")+'</td><td>'+esc(d.loc||"")+'</td>'+
+      return '<tr><td>'+esc(d.loc||"")+'</td><td class="num">'+esc(d.num||"")+'</td><td>'+esc(d.maker||"—")+'</td><td><span class="chip">'+esc(d.supplier||"—")+'</span></td><td class="num">'+esc(d.serial||"")+'</td>'+
         '<td class="num">'+(d.svc_phone?'<a href="'+telHref(d.svc_phone)+'" style="color:var(--accent);text-decoration:none;white-space:nowrap">'+esc(d.svc_phone)+'</a>':'—')+'</td>'+
         '<td>'+esc(d.contact||"—")+'</td>'+
         '<td>'+(d.email?'<a href="mailto:'+esc(d.email)+'" style="color:var(--accent);text-decoration:none">'+esc(d.email)+'</a>':'—')+'</td>'+
@@ -1180,8 +1185,8 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   async function exportDoors(){
     if(typeof XLSX==="undefined"){alert("מנוע האקסל לא נטען — נסה לרענן");return;}
     var wb=XLSX.utils.book_new(); wb.Workbook={Views:[{RTL:true}]};
-    var aoa=[["מספר גלעם","יצרן","ספק","דגם / מספר","מיקום","טלפון שירות","איש קשר","טלפון מנהל","אימייל","הערות"]];
-      DOORS.forEach(function(d){aoa.push([d.num,d.maker,d.supplier,d.serial,d.loc,d.svc_phone,d.contact,d.mgr_phone,d.email,d.notes]);});
+    var aoa=[["מיקום","מספר גלעם","יצרן","ספק","דגם / מספר","טלפון שירות","איש קשר","טלפון מנהל","אימייל","הערות"]];
+      DOORS.forEach(function(d){aoa.push([d.loc,d.num,d.maker,d.supplier,d.serial,d.svc_phone,d.contact,d.mgr_phone,d.email,d.notes]);});
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),"דלתות");
     var caoa=[["ספק","טלפון שירות","איש קשר","טלפון מנהל","אימייל","הערות"]];
     DCONTACTS.forEach(function(c){caoa.push([c.supplier,c.service_phone,c.contact,c.manager_phone,c.email,c.notes]);});
@@ -1192,6 +1197,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var blob=new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});var u=URL.createObjectURL(blob);var a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},1500);
   }
   $("drSearch").addEventListener("input",renderDoors);
+  if($("drLoc"))$("drLoc").addEventListener("change",renderDoors);
   $("drSupplier").addEventListener("change",renderDoors);
   $("drMaker").addEventListener("change",renderDoors);
   if($("drExport"))$("drExport").addEventListener("click",exportDoors);
