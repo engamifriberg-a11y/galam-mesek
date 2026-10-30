@@ -322,6 +322,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     <button class="tab" role="tab" data-main="ac" aria-selected="false">מזגנים</button>
     <button class="tab" role="tab" data-main="water" aria-selected="false">שטראוס מים</button>
     <button class="tab" role="tab" data-main="doors" aria-selected="false">דלתות מהירות</button>
+    <button class="tab" role="tab" data-main="calls" aria-selected="false">קריאות פתוחות</button>
   </div>
 </div>
 
@@ -742,7 +743,35 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     </div>
   </section>
 
-  <footer>כל הזכויות שמורות &copy; עמי פרייברג</footer>
+    <section id="main-calls" hidden>
+    <h1 class="view-title">קריאות פתוחות</h1>
+    <div class="view-sub" id="callsSub">רישום ומעקב אחר קריאות שירות.</div>
+    <div class="card">
+      <h2>פתיחת קריאה</h2>
+      <form id="callForm" class="form-grid">
+        <div class="field"><label for="cWho">מי פתח את הקריאה</label><input type="text" id="cWho" list="cWhoList" placeholder="שם" required><datalist id="cWhoList"></datalist></div>
+        <div class="field"><label for="cKind">מה התקלקל</label><select id="cKind" class="selbox" style="max-width:none;width:100%"><option>מזגן</option><option>דלת</option><option>תמי4</option><option>כללי</option></select></div>
+        <div class="field"><label for="cLoc">מיקום התקלה</label><input type="text" id="cLoc" placeholder="מיקום"></div>
+        <div class="field"><label for="cStatus">סטטוס</label><select id="cStatus" class="selbox" style="max-width:none;width:100%"><option>חדש</option><option>בטיפול</option><option>טופל</option></select></div>
+        <div class="field"><label for="cDate">תאריך</label><input type="date" id="cDate"></div>
+        <div class="field"><label for="cTime">שעה</label><input type="time" id="cTime"></div>
+        <div class="field wide"><label for="cDesc">תיאור התקלה</label><input type="text" id="cDesc" placeholder="מה קרה / פרטים"></div>
+        <button type="submit" class="btn block" style="grid-column:1/-1">פתח קריאה</button>
+      </form>
+      <div class="hint" id="callHint"></div>
+    </div>
+    <div class="toolbar">
+      <input class="search" id="callSearch" placeholder="חיפוש מיקום / תיאור / מי פתח…">
+      <select class="selbox" id="callStatusF"><option value="">כל הסטטוסים</option><option>חדש</option><option>בטיפול</option><option>טופל</option></select>
+      <select class="selbox" id="callKindF"><option value="">כל הסוגים</option><option>מזגן</option><option>דלת</option><option>תמי4</option><option>כללי</option></select>
+    </div>
+    <div class="table-scroll">
+      <table><thead><tr><th>תאריך</th><th>שעה</th><th>סוג</th><th>מיקום</th><th>מי פתח</th><th>תיאור</th><th>סטטוס</th><th></th></tr></thead>
+      <tbody id="callsRows"></tbody></table>
+    </div>
+  </section>
+
+<footer>כל הזכויות שמורות &copy; עמי פרייברג</footer>
 </main>
 
 <div class="modal-bg" id="installModal">
@@ -780,7 +809,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   var baseline=(SEED.records||[]).map(function(r){r._base=true;return r;});
 
   // ---- runtime state ----
-  var state={items:[],depts:[],live:[],water:[],distributors:[],records:[],ac:[],budget:{},doors:[]}; // come from db (or local fallback)
+  var state={items:[],depts:[],live:[],water:[],distributors:[],records:[],ac:[],budget:{},doors:[],calls:[]}; // come from db (or local fallback)
   var DEFAULT_DISTRIB=["אחמד אלחג","יחיא אבו בדר","נאדר שאמייה","עבד מחאמיד"];
   var db=null,user=null,DBMODE=false,canWrite=true,readOnly=false;
   var SB=null,SUPAMODE=false,_supaLoaded=false;
@@ -874,15 +903,15 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function loadLocal(){
     state.items=(SEED.items||[]).map(function(i){return {_id:"i"+i.id,name:i.name,unit:i.unit,stock:i.stock,cost:+i.cost||0};});
     state.depts=(SEED.depts||[]).slice();
-    state.live=[]; try{state.water=JSON.parse(document.getElementById("waterSeed").textContent)||[];}catch(e){state.water=[];} state.distributors=DEFAULT_DISTRIB.slice(); state.ac=acSeedArr(); state.budget={}; state.doors=doorsSeedArr();
+    state.live=[]; try{state.water=JSON.parse(document.getElementById("waterSeed").textContent)||[];}catch(e){state.water=[];} state.distributors=DEFAULT_DISTRIB.slice(); state.ac=acSeedArr(); state.budget={}; state.doors=doorsSeedArr(); state.calls=[];
     try{var raw=localStorage.getItem(LKEY);if(raw){var p=JSON.parse(raw);
-      if(p.items)state.items=p.items; if(p.depts)state.depts=p.depts; if(p.live)state.live=p.live; if(p.water)state.water=p.water; if(p.distributors)state.distributors=p.distributors; if(p.ac)state.ac=p.ac; if(p.budget)state.budget=p.budget; if(p.doors)state.doors=p.doors;
+      if(p.items)state.items=p.items; if(p.depts)state.depts=p.depts; if(p.live)state.live=p.live; if(p.water)state.water=p.water; if(p.distributors)state.distributors=p.distributors; if(p.ac)state.ac=p.ac; if(p.budget)state.budget=p.budget; if(p.doors)state.doors=p.doors; if(p.calls)state.calls=p.calls;
     }}catch(e){}
   }
   function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify(state));}catch(e){}}
 
   /* ---------- render ---------- */
-  function renderAll(){ fillSelects(); renderDashboard(); renderHistory(); renderNav(); renderItems(); renderStock(); renderDepts(); renderDistributors(); renderReports(); renderWater(); renderAC(); initDoors(); renderDistCtrl(); renderBudget(); applyWriteUI(); }
+  function renderAll(){ fillSelects(); renderDashboard(); renderHistory(); renderNav(); renderItems(); renderStock(); renderDepts(); renderDistributors(); renderReports(); renderWater(); renderAC(); initDoors(); renderCalls(); renderDistCtrl(); renderBudget(); applyWriteUI(); }
 
   function applyWriteUI(){
     var disabled=readOnly||(!canWrite&&DBMODE);
@@ -1115,6 +1144,9 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function delAc(id){ if(SUPAMODE){ state.ac=state.ac.filter(function(a){return a._id!=id;}); renderAll(); SB.from("air_conditioners").delete().eq("num",id).then(function(){}); } else { state.ac=state.ac.filter(function(a){return a._id!=id;}); saveLocal(); renderAll(); } }
   function addDoor(obj){ if(SUPAMODE){ obj._id="dr"+Date.now(); state.doors.push(obj); renderAll(); SB.from("doors").insert({id:obj._id,num:obj.num,maker:obj.maker,supplier:obj.supplier,serial:obj.serial,loc:obj.loc,svc_phone:obj.svc_phone,contact:obj.contact,mgr_phone:obj.mgr_phone,email:obj.email,notes:obj.notes}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה — ודא שהטבלה doors קיימת");}); } else { obj._id="dr"+Date.now(); state.doors.push(obj); saveLocal(); renderAll(); } }
   function delDoor(id){ if(SUPAMODE){ state.doors=state.doors.filter(function(d){return d._id!=id;}); renderAll(); SB.from("doors").delete().eq("id",id).then(function(){}); } else { state.doors=state.doors.filter(function(d){return d._id!=id;}); saveLocal(); renderAll(); } }
+  function addCall(obj){ if(SUPAMODE){ obj._id="c"+Date.now(); state.calls.push(obj); renderAll(); SB.from("calls").insert({id:obj._id,who:obj.who,kind:obj.kind,loc:obj.loc,status:obj.status,cdate:obj.cdate,ctime:obj.ctime,descr:obj.descr,ts:obj.ts}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה — ודא שהטבלה calls קיימת");}); } else { obj._id="c"+Date.now(); state.calls.push(obj); saveLocal(); renderAll(); } }
+  function updateCall(id,patch){ if(SUPAMODE){ var c=state.calls.filter(function(x){return x._id==id;})[0]; if(c){for(var k in patch)c[k]=patch[k];renderAll();} SB.from("calls").update(patch).eq("id",id).then(function(){}); } else { var c=state.calls.filter(function(x){return x._id==id;})[0]; if(c){for(var k in patch)c[k]=patch[k];saveLocal();renderAll();} } }
+  function delCall(id){ if(SUPAMODE){ state.calls=state.calls.filter(function(x){return x._id!=id;}); renderAll(); SB.from("calls").delete().eq("id",id).then(function(){}); } else { state.calls=state.calls.filter(function(x){return x._id!=id;}); saveLocal(); renderAll(); } }
   function setBudget(y,amt){ state.budget[y]=amt; renderAll(); if(SUPAMODE){ SB.from("budgets").upsert({year:+y,amount:amt}).then(function(r){if(r&&r.error)toast("שמירת תקציב נכשלה — ודא שהטבלה budgets קיימת ב-Supabase");}); } else { saveLocal(); } }
   function addWater(obj){
     if(SUPAMODE){ obj._id=obj.serial||("w"+Date.now()); state.water.push(obj); renderAll(); SB.from("water_devices").upsert({serial:obj._id,loc:obj.loc,model:obj.model,note:obj.note}).then(function(){}); }
@@ -1168,6 +1200,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     $("main-ac").hidden=(m!=="ac");
     $("main-water").hidden=(m!=="water");
     $("main-doors").hidden=(m!=="doors");
+    $("main-calls").hidden=(m!=="calls");
     try{localStorage.setItem("meshek_main",m);}catch(e){}
     window.scrollTo(0,0);
   });
@@ -1237,7 +1270,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   var armedDelete=null;
   function isArmed(type,id){return armedDelete===(type+":"+id);}
   function delBtn(type,id){var k=type+":"+esc(id);if(isArmed(type,id)){return '<button class="del-armed" data-delx="'+k+'">מחק ✓</button><button class="del-cancel" data-delcancel="1" aria-label="ביטול">↩</button>';}return '<button class="del" data-delx="'+k+'" aria-label="מחיקה">×</button>';}
-  function doDelete(k){var i=k.indexOf(":"),type=k.slice(0,i),id=k.slice(i+1);if(type==="ac")delAc(id);else if(type==="water")delWater(id);else if(type==="door")delDoor(id);}
+  function doDelete(k){var i=k.indexOf(":"),type=k.slice(0,i),id=k.slice(i+1);if(type==="ac")delAc(id);else if(type==="water")delWater(id);else if(type==="door")delDoor(id);else if(type==="call")delCall(id);}
   document.addEventListener("click",function(ev){
     var t=ev.target;
     var rid=t.getAttribute&&t.getAttribute("data-del-rec"); if(rid){delRecord(rid);return;}
@@ -1393,6 +1426,40 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   initDoors();
 
 
+  function callStatusSelect(c){
+    var opts=["חדש","בטיפול","טופל"];
+    var col=c.status==="טופל"?"var(--good)":c.status==="בטיפול"?"var(--warn)":"var(--crit)";
+    return '<select data-callstatus="'+esc(c._id)+'" style="border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--surface-2);color:'+col+';font-weight:700">'+opts.map(function(o){return '<option'+(o===c.status?" selected":"")+'>'+o+'</option>';}).join("")+'</select>';
+  }
+  function renderCalls(){
+    var wl=$("cWhoList"); if(wl){wl.innerHTML=(state.distributors||[]).map(function(n){return '<option value="'+esc(n)+'">';}).join("");}
+    var q=($("callSearch")?$("callSearch").value:"").trim(),sf=$("callStatusF")?$("callStatusF").value:"",kf=$("callKindF")?$("callKindF").value:"";
+    var list=(state.calls||[]).slice().sort(function(a,b){return (b.ts||0)-(a.ts||0);}).filter(function(c){
+      if(sf&&c.status!==sf)return false;
+      if(kf&&c.kind!==kf)return false;
+      if(q&&(c.loc||"").indexOf(q)<0&&(c.descr||"").indexOf(q)<0&&(c.who||"").indexOf(q)<0)return false;
+      return true;});
+    var openN=(state.calls||[]).filter(function(c){return c.status!=="טופל";}).length;
+    if($("callsSub"))$("callsSub").textContent="סה״כ "+nf((state.calls||[]).length)+" קריאות · "+nf(openN)+" פתוחות";
+    var tb=$("callsRows"); if(!tb)return;
+    if(list.length===0){tb.innerHTML='<tr><td colspan="8" class="empty">אין קריאות</td></tr>';return;}
+    tb.innerHTML=list.map(function(c){
+      return '<tr'+(isArmed("call",c._id)?' class="row-armed"':'')+'><td class="num">'+esc(c.cdate||"")+'</td><td class="num">'+esc(c.ctime||"")+'</td><td><span class="chip">'+esc(c.kind||"")+'</span></td><td>'+esc(c.loc||"")+'</td><td>'+esc(c.who||"")+'</td><td style="max-width:240px">'+esc(c.descr||"")+'</td><td>'+callStatusSelect(c)+'</td><td>'+delBtn("call",c._id)+'</td></tr>';
+    }).join("");
+  }
+  (function(){ var n=new Date(); if($("cDate"))$("cDate").value=n.toISOString().slice(0,10); if($("cTime"))$("cTime").value=n.toTimeString().slice(0,5); })();
+  if($("callForm"))$("callForm").addEventListener("submit",function(ev){ev.preventDefault();
+    var who=($("cWho").value||"").trim(); if(!who){if($("callHint"))$("callHint").innerHTML='<span style="color:var(--crit)">יש לציין מי פתח.</span>';return;}
+    var n=new Date();
+    addCall({who:who,kind:$("cKind").value,loc:($("cLoc").value||"").trim(),status:$("cStatus").value,cdate:$("cDate").value||n.toISOString().slice(0,10),ctime:$("cTime").value||n.toTimeString().slice(0,5),descr:($("cDesc").value||"").trim(),ts:Date.now()});
+    if($("callHint"))$("callHint").innerHTML='<span style="color:var(--good)">הקריאה נפתחה ✓</span>';toast("הקריאה נפתחה ✓");
+    this.reset(); var m=new Date(); $("cDate").value=m.toISOString().slice(0,10); $("cTime").value=m.toTimeString().slice(0,5);
+  });
+  if($("callSearch"))$("callSearch").addEventListener("input",renderCalls);
+  if($("callStatusF"))$("callStatusF").addEventListener("change",renderCalls);
+  if($("callKindF"))$("callKindF").addEventListener("change",renderCalls);
+  document.addEventListener("change",function(ev){var s=ev.target; if(!s||!s.getAttribute)return; var cid=s.getAttribute("data-callstatus"); if(cid){updateCall(cid,{status:s.value});}});
+
   // ---- clock + weather (top info bar) ----
   function tickClock(){
     try{
@@ -1450,6 +1517,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     else if(which==="ac")SB.from("air_conditioners").select("*").then(function(r){if(!(r&&r.data))return;
       if(r.data.length){state.ac=r.data.map(function(x){return {_id:x.num,num:x.num,loc:x.loc,model:x.model,type:x.type};});renderAll();}
       else if(!supaSeeded.ac&&state.ac&&state.ac.length){supaSeeded.ac=1;SB.from("air_conditioners").upsert(state.ac.map(function(a){return {num:a.num,loc:a.loc,model:a.model,type:a.type};})).then(function(){supaRefetch("ac");});}});
+    else if(which==="calls")SB.from("calls").select("*").then(function(r){if(r&&r.data){state.calls=r.data.map(function(x){return {_id:x.id,who:x.who,kind:x.kind,loc:x.loc,status:x.status,cdate:x.cdate,ctime:x.ctime,descr:x.descr,ts:+x.ts||0};});renderAll();}});
     else if(which==="budgets")SB.from("budgets").select("*").then(function(r){if(r&&r.data){var b={};r.data.forEach(function(x){b[x.year]=+x.amount||0;});state.budget=b;renderAll();}});
     else if(which==="doors")SB.from("doors").select("*").then(function(r){if(!(r&&r.data))return;
       if(r.data.length){state.doors=r.data.map(function(x){return {_id:x.id,num:x.num,maker:x.maker,supplier:x.supplier,serial:x.serial,loc:x.loc,svc_phone:x.svc_phone,contact:x.contact,mgr_phone:x.mgr_phone,email:x.email,notes:x.notes};});renderAll();}
@@ -1460,7 +1528,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     try{ SB=window.supabase.createClient(window.SUPA_URL,window.SUPA_KEY); window.__SB=SB; }catch(e){ SB=null; }
     if(!SB){ SUPAMODE=false; setStatus("local"); return; }
     SUPAMODE=true; setStatus("connecting");
-    supaRefetch("items");supaRefetch("records");supaRefetch("departments");supaRefetch("distributors");supaRefetch("water");supaRefetch("ac");supaRefetch("budgets");supaRefetch("doors");
+    supaRefetch("items");supaRefetch("records");supaRefetch("departments");supaRefetch("distributors");supaRefetch("water");supaRefetch("ac");supaRefetch("budgets");supaRefetch("doors");supaRefetch("calls");
     try{
       SB.channel("galam-rt")
         .on("postgres_changes",{event:"*",schema:"public",table:"items"},function(){supaRefetch("items");})
@@ -1471,6 +1539,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
         .on("postgres_changes",{event:"*",schema:"public",table:"air_conditioners"},function(){supaRefetch("ac");})
         .on("postgres_changes",{event:"*",schema:"public",table:"budgets"},function(){supaRefetch("budgets");})
         .on("postgres_changes",{event:"*",schema:"public",table:"doors"},function(){supaRefetch("doors");})
+        .on("postgres_changes",{event:"*",schema:"public",table:"calls"},function(){supaRefetch("calls");})
         .subscribe();
     }catch(e){}
   })();
