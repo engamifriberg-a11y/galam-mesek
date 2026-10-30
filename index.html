@@ -794,7 +794,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function nf(n){return (Math.round(n)).toLocaleString("he-IL");}
   function curMonth(){var n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");}
   function recMonth(r){return (r.date||"").slice(0,7);}
-  function allRecords(){return (SUPAMODE&&_supaLoaded)?state.records:baseline.concat(state.live);}
+  function allRecords(){return baseline.concat((SUPAMODE&&_supaLoaded)?state.records:state.live);}
   function itemByName(n){for(var i=0;i<state.items.length;i++)if(state.items[i].name===n)return state.items[i];return null;}
 
   function money(n){n=+n||0;return '₪'+(Math.round(n*100)/100).toLocaleString("he-IL");}
@@ -1431,16 +1431,29 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   renderAll();
 
   // ---- Supabase shared backend (live, anyone can edit) ----
+  var supaSeeded={};
   function supaRefetch(which){
     if(!SUPAMODE)return;
-    if(which==="items")SB.from("items").select("*").then(function(r){if(r&&r.data){state.items=r.data.map(function(x){return {_id:x.id,name:x.name,unit:x.unit,stock:+x.stock||0,cost:+x.cost||0};}).sort(function(a,b){return (a.name||"").localeCompare(b.name||"","he");});renderAll();}});
+    if(which==="items")SB.from("items").select("*").then(function(r){if(!(r&&r.data))return;
+      if(r.data.length){state.items=r.data.map(function(x){return {_id:x.id,name:x.name,unit:x.unit,stock:+x.stock||0,cost:+x.cost||0};}).sort(function(a,b){return (a.name||"").localeCompare(b.name||"","he");});renderAll();}
+      else if(!supaSeeded.items&&state.items&&state.items.length){supaSeeded.items=1;SB.from("items").upsert(state.items.map(function(i){return {id:i._id,name:i.name,unit:i.unit,stock:i.stock,cost:i.cost||0};})).then(function(){supaRefetch("items");});}});
     else if(which==="records")SB.from("records").select("*").then(function(r){if(r&&r.data){state.records=r.data.map(function(x){return {_id:x.id,date:x.date,dept:x.dept,item:x.item,qty:+x.qty||0,by:x["by"]||"",note:x.note||""};});_supaLoaded=true;renderAll();setStatus("live");}});
-    else if(which==="departments")SB.from("departments").select("*").then(function(r){if(r&&r.data){state.depts=r.data.map(function(x){return x.name;});renderAll();}});
-    else if(which==="distributors")SB.from("distributors").select("*").then(function(r){if(r&&r.data&&r.data.length){state.distributors=r.data.map(function(x){return x.name;});renderAll();}});
-    else if(which==="water")SB.from("water_devices").select("*").then(function(r){if(r&&r.data){state.water=r.data.map(function(x){return {_id:x.serial,serial:x.serial,loc:x.loc,model:x.model,note:x.note};});renderAll();}});
-    else if(which==="ac")SB.from("air_conditioners").select("*").then(function(r){if(r&&r.data&&r.data.length){state.ac=r.data.map(function(x){return {_id:x.num,num:x.num,loc:x.loc,model:x.model,type:x.type};});renderAll();}});
+    else if(which==="departments")SB.from("departments").select("*").then(function(r){if(!(r&&r.data))return;
+      if(r.data.length){state.depts=r.data.map(function(x){return x.name;});renderAll();}
+      else if(!supaSeeded.departments&&state.depts&&state.depts.length){supaSeeded.departments=1;SB.from("departments").upsert(state.depts.map(function(n){return {name:n};})).then(function(){supaRefetch("departments");});}});
+    else if(which==="distributors")SB.from("distributors").select("*").then(function(r){if(!(r&&r.data))return;
+      if(r.data.length){state.distributors=r.data.map(function(x){return x.name;});renderAll();}
+      else if(!supaSeeded.distributors&&state.distributors&&state.distributors.length){supaSeeded.distributors=1;SB.from("distributors").upsert(state.distributors.map(function(n){return {name:n};})).then(function(){supaRefetch("distributors");});}});
+    else if(which==="water")SB.from("water_devices").select("*").then(function(r){if(!(r&&r.data))return;
+      if(r.data.length){state.water=r.data.map(function(x){return {_id:x.serial,serial:x.serial,loc:x.loc,model:x.model,note:x.note};});renderAll();}
+      else if(!supaSeeded.water&&state.water&&state.water.length){supaSeeded.water=1;SB.from("water_devices").upsert(state.water.map(function(w){return {serial:w.serial,loc:w.loc,model:w.model,note:w.note};})).then(function(){supaRefetch("water");});}});
+    else if(which==="ac")SB.from("air_conditioners").select("*").then(function(r){if(!(r&&r.data))return;
+      if(r.data.length){state.ac=r.data.map(function(x){return {_id:x.num,num:x.num,loc:x.loc,model:x.model,type:x.type};});renderAll();}
+      else if(!supaSeeded.ac&&state.ac&&state.ac.length){supaSeeded.ac=1;SB.from("air_conditioners").upsert(state.ac.map(function(a){return {num:a.num,loc:a.loc,model:a.model,type:a.type};})).then(function(){supaRefetch("ac");});}});
     else if(which==="budgets")SB.from("budgets").select("*").then(function(r){if(r&&r.data){var b={};r.data.forEach(function(x){b[x.year]=+x.amount||0;});state.budget=b;renderAll();}});
-    else if(which==="doors")SB.from("doors").select("*").then(function(r){if(r&&r.data&&r.data.length){state.doors=r.data.map(function(x){return {_id:x.id,num:x.num,maker:x.maker,supplier:x.supplier,serial:x.serial,loc:x.loc,svc_phone:x.svc_phone,contact:x.contact,mgr_phone:x.mgr_phone,email:x.email,notes:x.notes};});renderAll();}});
+    else if(which==="doors")SB.from("doors").select("*").then(function(r){if(!(r&&r.data))return;
+      if(r.data.length){state.doors=r.data.map(function(x){return {_id:x.id,num:x.num,maker:x.maker,supplier:x.supplier,serial:x.serial,loc:x.loc,svc_phone:x.svc_phone,contact:x.contact,mgr_phone:x.mgr_phone,email:x.email,notes:x.notes};});renderAll();}
+      else if(!supaSeeded.doors&&state.doors&&state.doors.length){supaSeeded.doors=1;SB.from("doors").upsert(state.doors.map(function(d){return {id:d._id,num:d.num,maker:d.maker,supplier:d.supplier,serial:d.serial,loc:d.loc,svc_phone:d.svc_phone,contact:d.contact,mgr_phone:d.mgr_phone,email:d.email,notes:d.notes};})).then(function(){supaRefetch("doors");});}});
   }
   (function(){
     if(!(window.supabase&&window.SUPA_URL&&window.SUPA_KEY)){ SUPAMODE=false; setStatus("local"); return; }
