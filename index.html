@@ -171,13 +171,15 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
 .ib-clock{display:flex;flex-direction:column;gap:1px;min-width:0}
 .ib-time{font-family:var(--font-display);font-weight:800;font-size:1.5rem;letter-spacing:.01em;font-variant-numeric:tabular-nums;line-height:1}
 .ib-date{font-size:.82rem;color:var(--muted);font-weight:600}
-.ib-weather{display:flex;flex-direction:row-reverse;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.ib-weather{width:100%}
+.ib-now{margin-inline-start:auto}
 .ib-wloading{color:var(--muted);font-size:.82rem;align-self:center}
 .wx-loc{font-size:.68rem;color:var(--muted);font-weight:700;letter-spacing:.02em}
 .wx-now{display:inline-flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:800;font-size:1.05rem;box-shadow:var(--shadow)}
 .wx-now .i{font-size:1.2rem;line-height:1}
-.wx-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.wx-day{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:9px 12px;min-width:64px;box-shadow:var(--shadow)}
+.wx-row{display:flex;gap:9px;width:100%;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+.wx-row::-webkit-scrollbar{display:none}
+.wx-day{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 11px;flex:0 0 auto;min-width:74px;scroll-snap-align:start;box-shadow:var(--shadow)}
 .wx-day.today{background:var(--accent-soft);border-color:var(--accent)}
 .wx-day .d{font-size:.74rem;color:var(--muted);font-weight:800}
 .wx-day.today .d{color:var(--accent)}
@@ -322,6 +324,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
 <main class="gutter">
   <div class="infobar" id="infobar">
     <div class="ib-clock"><span class="ib-time" id="ibTime">--:--</span><span class="ib-date" id="ibDate"></span></div>
+    <div class="ib-now" id="ibNow"></div>
     <div class="ib-weather" id="ibWeather"><span class="ib-wloading">טוען מזג אוויר…</span></div>
   </div>
   <div class="ro-note" id="roNote" hidden>מצב קריאה בלבד — אין לך הרשאת עריכה. כדי להזין נתונים, בקש מבעל המערכת גישת עריכה (Contributor).</div>
@@ -1369,10 +1372,9 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function wxDate(iso){try{var dt=new Date(iso+"T12:00:00");return dt.getDate()+"."+(dt.getMonth()+1);}catch(e){return "";}}
   function renderWeather(d,cur){
     var el=$("ibWeather");if(!el||!d||!d.time)return;
-    var html='';
-    if(cur&&typeof cur.temperature_2m!=="undefined"){html+='<div class="wx-now"><span class="i">'+(WX[cur.weather_code]||"🌡️")+'</span><span>'+Math.round(cur.temperature_2m)+'°</span></div>';}
-    html+='<div class="wx-row">';
-    for(var i=0;i<d.time.length&&i<4;i++){
+    var now=$("ibNow"); if(now){now.innerHTML=(cur&&typeof cur.temperature_2m!=="undefined")?('<div class="wx-now"><span class="i">'+(WX[cur.weather_code]||"🌡️")+'</span><span>'+Math.round(cur.temperature_2m)+'°</span></div>'):'';}
+    var html='<div class="wx-row">';
+    for(var i=0;i<d.time.length&&i<6;i++){
       var hi=Math.round(d.temperature_2m_max[i]),lo=Math.round(d.temperature_2m_min[i]);
       html+='<div class="wx-day'+(i===0?" today":"")+'"><span class="d">'+(i===0?"היום":wxDayName(d.time[i]))+'</span><span class="i">'+(WX[d.weather_code[i]]||"•")+'</span><span class="t">'+hi+'°<span class="lo">'+lo+'°</span></span><span class="dt">'+wxDate(d.time[i])+'</span></div>';
     }
@@ -1380,7 +1382,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   }
   (function loadWeather(){
     try{
-      fetch("https://api.open-meteo.com/v1/forecast?latitude=32.51&longitude=35.01&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FJerusalem&forecast_days=4")
+      fetch("https://api.open-meteo.com/v1/forecast?latitude=32.51&longitude=35.01&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FJerusalem&forecast_days=6")
       .then(function(r){return r.json();})
       .then(function(j){ if(j&&j.daily)renderWeather(j.daily,j.current); else throw 0; })
       .catch(function(){ var el=$("ibWeather");if(el)el.innerHTML='<span class="ib-wloading">מזג האוויר יוצג באתר המקוון 🌤️</span>'; });
