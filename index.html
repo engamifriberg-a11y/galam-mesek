@@ -575,6 +575,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
   <button class="ptab on" data-t="tab1" role="tab">הזנה וסיכום</button>
   <button class="ptab" data-t="tabM" role="tab">סיכום חודשי</button>
   <button class="ptab" data-t="tab2" role="tab">שנה מול שנה</button>
+  <button class="ptab" data-t="tabT" role="tab">סוגי משטחים</button>
 </div>
 
 <div id="tab1">
@@ -633,7 +634,24 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
   <h2 style="margin-top:16px">לפי סוג משטח</h2>
   <div class="scroll"><table id="cmpTypes"></table></div>
 </div>
-</div></div>
+</div>
+<div id="tabT" hidden>
+<div class="card">
+  <h2>הוספת סוג משטח</h2>
+  <div class="prices">
+    <div><label>שם הסוג</label><input type="text" id="ntName" placeholder="לדוגמה: משטח עץ"></div>
+    <div><label>מחיר למשטח (₪)</label><input type="number" id="ntPrice" min="0" value="0"></div>
+  </div>
+  <div class="bar" style="margin-top:12px"><button class="p" id="ntAdd">+ הוסף סוג</button></div>
+  <span id="ntMsg" class="sub" style="display:block;margin-top:6px"></span>
+</div>
+<div class="card">
+  <h2>סוגי המשטחים הקיימים</h2>
+  <div class="sub">אפשר לערוך מחיר או להסיר סוג. הסרת סוג מוחקת את הכמויות שלו מכל השבועות.</div>
+  <div class="scroll"><table id="typesTbl"></table></div>
+</div>
+</div>
+</div>
   </section>
 
   <section id="main-water" hidden>
@@ -1669,7 +1687,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 <script>
 (function(){
 
-const TYPES=[
+let TYPES=[
  {k:'fru',n:'פרוקטוזה / פוס ירוק',p:60},
  {k:'used',n:'משומש 120/100',p:23},
  {k:'glu',n:'גלוקוזה 110/110',p:23},
@@ -1693,13 +1711,19 @@ function load(){
     o.ver=2;delete o._fresh;
     try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}
   }
+  if(!Array.isArray(o.prices))o.prices=TYPES.map(function(t){return t.p;});
+  if(!Array.isArray(o.types)||!o.types.length){o.types=TYPES.map(function(t){return t.n;});}
+  else{TYPES=o.types.map(function(nm,i){return {n:nm,p:(o.prices[i]!=null?o.prices[i]:0)};});}
+  while(o.prices.length<TYPES.length)o.prices.push(0); if(o.prices.length>TYPES.length)o.prices.length=TYPES.length;
+  (o.rows||[]).forEach(function(r){if(!Array.isArray(r.q))r.q=[];while(r.q.length<TYPES.length)r.q.push(0);if(r.q.length>TYPES.length)r.q.length=TYPES.length;});
   return o;
 }
 let PDB=null,pSaveTimer=null,pApplying=false,pUserTouched=false;
 function save(){
   if(!pApplying)pUserTouched=true;
+  S.types=TYPES.map(function(t){return t.n;});
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
-  var _sb=window.__SB; if(_sb&&!pApplying){clearTimeout(pSaveTimer);pSaveTimer=setTimeout(function(){_sb.from("pallets").upsert({id:"state",prices:S.prices,rows:S.rows}).then(function(){});},600);}
+  var _sb=window.__SB; if(_sb&&!pApplying){clearTimeout(pSaveTimer);pSaveTimer=setTimeout(function(){_sb.from("pallets").upsert({id:"state",prices:S.prices,rows:S.rows,types:S.types}).then(function(res){if(res&&res.error){_sb.from("pallets").upsert({id:"state",prices:S.prices,rows:S.rows}).then(function(){});}});},600);}
 }
 const fmt=n=>'₪'+Math.round(n).toLocaleString('he-IL');
 const rowTotal=r=>r.q.reduce((s,x,i)=>s+(+x||0)*S.prices[i],0);
@@ -1896,13 +1920,58 @@ function renderCmp(){
   cmpState={cA,cB,cut,mA,mB,ta,tb};
 }
 let cmpState=null;
+  let typeArmed=null;
+  function pesc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];});}
+  function renderTypes(){
+    var t=document.getElementById('typesTbl'); if(!t)return;
+    var h='<thead><tr><th style="text-align:right">סוג משטח</th><th>מחיר (₪)</th><th></th></tr></thead><tbody>';
+    TYPES.forEach(function(ty,i){
+      h+='<tr><td style="text-align:right">'+pesc(ty.n)+'</td><td><input type="number" min="0" data-tp="'+i+'" value="'+(S.prices[i]||0)+'" style="width:90px"></td><td>'+
+        (typeArmed===i?('<button class="d" data-tconfirm="'+i+'">מחק \u2713</button> <button data-tcancel="1">ביטול</button>'):('<button class="x" data-tdel="'+i+'">\u2715 הסר</button>'))+'</td></tr>';
+    });
+    if(!TYPES.length)h+='<tr><td colspan="3" class="sub">אין סוגים</td></tr>';
+    t.innerHTML=h+'</tbody>';
+  }
+  function addType(){
+    var nmEl=document.getElementById('ntName'),prEl=document.getElementById('ntPrice'),msg=document.getElementById('ntMsg');
+    var nm=(nmEl.value||'').trim().replace(/[<>]/g,''); var pr=+prEl.value||0;
+    if(!nm){if(msg)msg.textContent='יש להזין שם סוג';return;}
+    TYPES.push({n:nm,p:pr});S.prices.push(pr);S.rows.forEach(function(r){if(!Array.isArray(r.q))r.q=[];r.q.push(0);});
+    save();nmEl.value='';prEl.value=0;if(msg)msg.textContent='הסוג "'+nm+'" נוסף \u2713';
+    renderPrices();renderTypes();renderAll(true);
+  }
+  function removeType(i){
+    if(i<0||i>=TYPES.length)return;
+    TYPES.splice(i,1);S.prices.splice(i,1);S.rows.forEach(function(r){if(Array.isArray(r.q))r.q.splice(i,1);});
+    typeArmed=null;save();renderPrices();renderTypes();renderAll(true);
+  }
+  function applyRemote(d){
+    if(!d)return;
+    if(Array.isArray(d.prices)&&d.prices.length)S.prices=d.prices.slice();
+    if(Array.isArray(d.types)&&d.types.length){S.types=d.types.slice();TYPES=S.types.map(function(nm,i){return {n:nm,p:(S.prices[i]!=null?S.prices[i]:0)};});}
+    if(Array.isArray(d.rows))S.rows=d.rows;
+    S.rows.forEach(function(r){if(!Array.isArray(r.q))r.q=[];while(r.q.length<TYPES.length)r.q.push(0);if(r.q.length>TYPES.length)r.q.length=TYPES.length;});
+  }
+  (function(){
+    var na=document.getElementById('ntAdd'); if(na)na.onclick=addType;
+    var tt=document.getElementById('typesTbl');
+    if(tt){
+      tt.addEventListener('click',function(ev){var t=ev.target;
+        var d=t.getAttribute&&t.getAttribute('data-tdel'); if(d!=null){typeArmed=+d;renderTypes();return;}
+        var c=t.getAttribute&&t.getAttribute('data-tconfirm'); if(c!=null){removeType(+c);return;}
+        if(t.getAttribute&&t.getAttribute('data-tcancel')!=null){typeArmed=null;renderTypes();return;}
+      });
+      tt.addEventListener('change',function(ev){var t=ev.target;var p=t.getAttribute&&t.getAttribute('data-tp'); if(p!=null){S.prices[+p]=+t.value||0;save();renderPrices();renderTypes();renderAll(true);}});
+    }
+  })();
+
 function renderAll(withSel){renderSelects();renderKpis();renderWeeks();renderMonths();renderCmp()}
 
 document.getElementById('addWeek').onclick=()=>{
   sortRows();
   const last=S.rows.length?S.rows[S.rows.length-1].d:null;
   let d=last?addDays(last,7):todayStr();
-  S.rows.push({d,q:[0,0,0,0,0,0]});ensureVisible(d);save();selDate=d;renderAll(true);
+  S.rows.push({d,q:TYPES.map(function(){return 0;})});ensureVisible(d);save();selDate=d;renderAll(true);
   var inp=document.querySelector('#weeks tbody tr[data-r="'+(S.rows.findIndex(r=>r.d===d))+'"] input[data-c="0"]');
   if(inp){try{inp.scrollIntoView({block:'center',behavior:'smooth'});}catch(_){ } inp.focus(); say('נוסף שבוע '+heDate(d)+' — הזן כמויות');}
 };
@@ -1945,8 +2014,8 @@ document.getElementById('exportX').onclick=async()=>{
 
 document.querySelectorAll('.ptab').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.ptab').forEach(x=>x.classList.toggle('on',x===b));
-  ['tab1','tabM','tab2'].forEach(id=>document.getElementById(id).hidden=(id!==b.dataset.t));
-  if(b.dataset.t==='tab2')renderCmp();if(b.dataset.t==='tabM')renderMonths();
+  ['tab1','tabM','tab2','tabT'].forEach(id=>document.getElementById(id).hidden=(id!==b.dataset.t));
+  if(b.dataset.t==='tab2')renderCmp();if(b.dataset.t==='tabM')renderMonths();if(b.dataset.t==='tabT')renderTypes();
   window.scrollTo(0,0);
 });
 async function savePalletWb(wb,fn){
@@ -1982,14 +2051,14 @@ renderPrices();renderAll(true);
 (function(){
   var _sb=window.__SB; if(!_sb)return;
   _sb.from("pallets").select("*").eq("id","state").maybeSingle().then(function(r){
-    if(r&&r.data&&!pUserTouched){var d=r.data;if(Array.isArray(d.rows))S.rows=d.rows;if(Array.isArray(d.prices)&&d.prices.length)S.prices=d.prices;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}renderAll(true);}
+    if(r&&r.data&&!pUserTouched){applyRemote(r.data);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}renderPrices();renderTypes();renderAll(true);}
   });
   try{
     _sb.channel("pallets-rt").on("postgres_changes",{event:"*",schema:"public",table:"pallets"},function(payload){
       var mp=document.getElementById('main-pallets'); if(mp&&!mp.hidden)return;
       var d=payload&&payload.new; if(!d)return;
-      if(Array.isArray(d.rows))S.rows=d.rows; if(Array.isArray(d.prices)&&d.prices.length)S.prices=d.prices;
-      pApplying=true;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}renderAll(true);pApplying=false;
+      applyRemote(d);
+      pApplying=true;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}renderPrices();renderTypes();renderAll(true);pApplying=false;
     }).subscribe();
   }catch(e){}
 })();
