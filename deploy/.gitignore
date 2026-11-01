@@ -1,0 +1,6 @@
+.env
+backups/
+*.dump
+*.dump.sha256
+vendor/supabase.js
+vendor/xlsx.full.min.js

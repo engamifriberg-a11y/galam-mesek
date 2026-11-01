@@ -1,0 +1,72 @@
+# Galam Mesek — self-hosting stack (lean): Postgres + PostgREST + nginx.
+# Near-real-time via the app's 20s polling fallback (no websocket service needed).
+# For built-in websocket realtime + Supabase Auth (Azure/M365) instead, see
+# deploy/README.md "Alternative: self-hosted Supabase".
+name: galam-mesek
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: galam
+      AUTHENTICATOR_PASSWORD: ${AUTHENTICATOR_PASSWORD:?set AUTHENTICATOR_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+      - ./initdb/20-authenticator.sh:/docker-entrypoint-initdb.d/20-authenticator.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d galam"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  postgrest:
+    image: postgrest/postgrest:v12.2.3
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD:?}@db:5432/galam
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: web_anon
+      PGRST_DB_POOL: "10"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ../:/usr/share/nginx/html:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    depends_on:
+      - postgrest
+
+  # ---------------------------------------------------------------------------
+  # OPTIONAL — Microsoft 365 (Entra ID) SSO in front of the whole app.
+  # Make oauth2-proxy the public entrypoint (TLS terminated here or at the org LB)
+  # and have it proxy to the 'web' service. Fill the OAUTH2_* vars in .env.
+  # ---------------------------------------------------------------------------
+  # oauth2-proxy:
+  #   image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+  #   restart: unless-stopped
+  #   command:
+  #     - --provider=oidc
+  #     - --oidc-issuer-url=${OAUTH2_PROXY_OIDC_ISSUER_URL}   # https://login.microsoftonline.com/<TENANT_ID>/v2.0
+  #     - --client-id=${OAUTH2_PROXY_CLIENT_ID}
+  #     - --client-secret=${OAUTH2_PROXY_CLIENT_SECRET}
+  #     - --cookie-secret=${OAUTH2_PROXY_COOKIE_SECRET}
+  #     - --email-domain=galam.co.il
+  #     - --upstream=http://web:80
+  #     - --http-address=0.0.0.0:4180
+  #     - --reverse-proxy=true
+  #   ports:
+  #     - "443:4180"   # terminate TLS here or at the org load balancer
+  #   depends_on: [web]
+
+volumes:
+  pgdata:

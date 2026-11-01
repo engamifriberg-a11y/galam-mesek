@@ -107,10 +107,12 @@ textarea{min-height:92px;resize:vertical}
   <div class="foot">כל הזכויות שמורות © עמי פרייברג</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+<!-- Runtime config (backend URL + PUBLIC anon key). No admin secrets here. See config.example.js -->
+<script src="config.js"></script>
 <script>
 (function(){
-  var SUPA_URL="https://zrmjfxztaeuuvdqhwdzm.supabase.co";
-  var SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWpmeHp0YWV1dXZkcWh3ZHptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NDA3MTksImV4cCI6MjEwODUxNjcxOX0.ENmZvUV66S7AH7bZF3EEXzYzgbgGewfMgSJPiKQMMMY";
+  var SUPA_URL=window.SUPA_URL||"";
+  var SUPA_KEY=window.SUPA_KEY||"";
   var SB=null; try{ SB=window.supabase.createClient(SUPA_URL,SUPA_KEY); }catch(e){ SB=null; }
   var $=function(id){return document.getElementById(id);};
   var kind="מזגן", lastNum=null;
