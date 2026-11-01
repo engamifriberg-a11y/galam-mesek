@@ -72,7 +72,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .tab:hover{color:#f1f5fb;background:rgba(255,255,255,.12)}
 .tab[aria-selected="true"]{background:var(--accent);color:#fff}
 
-.subrail{display:flex;gap:6px;overflow-x:auto;padding:4px 0 12px;margin-bottom:6px;scrollbar-width:none}
+.subrail{display:flex;gap:6px;overflow-x:auto;padding:4px 14px 12px;margin-bottom:6px;scroll-padding-inline:14px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none}
 .subrail::-webkit-scrollbar{display:none}
 .subtab{flex:none;background:var(--surface);border:1px solid var(--line);color:var(--muted);font-weight:600;font-size:.88rem;padding:7px 14px;border-radius:999px;white-space:nowrap;box-shadow:var(--shadow);transition:background .2s,color .2s}
 .subtab:hover{color:var(--ink)}
@@ -322,6 +322,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     <button class="tab" role="tab" data-main="ac" aria-selected="false">מזגנים</button>
     <button class="tab" role="tab" data-main="water" aria-selected="false">שטראוס מים</button>
     <button class="tab" role="tab" data-main="doors" aria-selected="false">דלתות מהירות</button>
+    <button class="tab" role="tab" data-main="dish" aria-selected="false">מדיחי כלים</button>
     <button class="tab" role="tab" data-main="calls" aria-selected="false">קריאות פתוחות</button>
   </div>
 </div>
@@ -761,14 +762,43 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     </div>
   </section>
 
-    <section id="main-calls" hidden>
+      <section id="main-dish" hidden>
+    <div class="ac-contacts">
+      <div class="ac-ch">☎ פתיחת קריאת שירות — מדיח כלים</div>
+      <div class="ac-phones">
+        <a class="ac-phone" href="tel:*3753"><span class="r">שירות</span><span class="n">*3753</span></a>
+      </div>
+    </div>
+    <h1 class="view-title">מדיחי כלים</h1>
+    <div class="view-sub" id="dishSub">רשימת מדיחי הכלים והמיקומים שלהם.</div>
+    <div class="card">
+      <h2>הוספת מדיח כלים</h2>
+      <form id="dishForm" class="form-grid">
+        <div class="field"><label for="dwLoc">מיקום</label><input type="text" id="dwLoc" placeholder="מיקום המדיח" required></div>
+        <div class="field"><label for="dwDept">מחלקה</label><input type="text" id="dwDept" list="dwDeptList" placeholder="מחלקה"><datalist id="dwDeptList"></datalist></div>
+        <button type="submit" class="btn block" style="grid-column:1/-1">הוסף מדיח</button>
+      </form>
+      <div class="hint" id="dishHint"></div>
+    </div>
+    <div class="toolbar">
+      <input class="search" id="dishSearch" placeholder="חיפוש מיקום / מחלקה…">
+      <select class="selbox" id="dishDeptF"><option value="">כל המחלקות</option></select>
+    </div>
+    <div class="table-scroll">
+      <table><thead><tr><th>מס׳</th><th>מיקום</th><th>מחלקה</th><th></th></tr></thead>
+      <tbody id="dishRows"></tbody></table>
+    </div>
+    <script type="application/json" id="dishData">[{"loc":"מבנה לוגיסטיקה ישן","dept":"לוגיסטיקה","_id":"dw0"},{"loc":"מטבח מעבדה מאוחדת","dept":"איכות","_id":"dw1"},{"loc":"עמילן יבש / ביטנר","dept":"עמילן","_id":"dw2"},{"loc":"חשמליה","dept":"אחזקה","_id":"dw3"},{"loc":"תפעול","dept":"משרדי תפעול","_id":"dw4"},{"loc":"בית המהנדס","dept":"הנדסה","_id":"dw5"},{"loc":"איכות","dept":"איכות","_id":"dw6"},{"loc":"שיווק מטבח קומה 1","dept":"שיווק","_id":"dw7"},{"loc":"שיווק מטבח קומה קרקע","dept":"שיווק","_id":"dw8"},{"loc":"פרוקטוזה בקרה","dept":"פרוקטוזה","_id":"dw9"},{"loc":"מו\"פ","dept":"פיתוח","_id":"dw10"},{"loc":"נמסים 701 בקרה","dept":"לוגיסטיקה","_id":"dw11"},{"loc":"מטבחון משרדים קומה 2","dept":"מטה","_id":"dw12"},{"loc":"FOS","dept":"פרוקטוזה","_id":"dw13"},{"loc":"בקרה ציקלונים","dept":"עמילן","_id":"dw14"},{"loc":"מטבח - לשכת המנכ\"ל","dept":"מטה","_id":"dw15"}]</script>
+  </section>
+
+  <section id="main-calls" hidden>
     <h1 class="view-title">קריאות פתוחות</h1>
     <div class="view-sub" id="callsSub">רישום ומעקב אחר קריאות שירות.</div>
     <div class="card">
       <h2>פתיחת קריאה</h2>
       <form id="callForm" class="form-grid">
         <div class="field"><label for="cWho">מי פתח את הקריאה</label><input type="text" id="cWho" list="cWhoList" placeholder="שם" required><datalist id="cWhoList"></datalist></div>
-        <div class="field"><label for="cKind">מה התקלקל</label><select id="cKind" class="selbox" style="max-width:none;width:100%"><option>מזגן</option><option>דלת</option><option>תמי4</option><option>כללי</option></select></div>
+        <div class="field"><label for="cKind">מה התקלקל</label><select id="cKind" class="selbox" style="max-width:none;width:100%"><option>מזגן</option><option>דלת</option><option>תמי4</option><option>מדיח כלים</option><option>כללי</option></select></div>
         <div class="field"><label for="cLoc">מיקום התקלה</label><input type="text" id="cLoc" placeholder="מיקום"></div>
         <div class="field"><label for="cStatus">סטטוס</label><select id="cStatus" class="selbox" style="max-width:none;width:100%"><option>חדש</option><option>בטיפול</option><option>טופל</option></select></div>
         <div class="field"><label for="cDate">תאריך</label><input type="date" id="cDate"></div>
@@ -781,7 +811,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     <div class="toolbar">
       <input class="search" id="callSearch" placeholder="חיפוש מיקום / תיאור / מי פתח…">
       <select class="selbox" id="callStatusF"><option value="">כל הסטטוסים</option><option>חדש</option><option>בטיפול</option><option>טופל</option></select>
-      <select class="selbox" id="callKindF"><option value="">כל הסוגים</option><option>מזגן</option><option>דלת</option><option>תמי4</option><option>כללי</option></select>
+      <select class="selbox" id="callKindF"><option value="">כל הסוגים</option><option>מזגן</option><option>דלת</option><option>תמי4</option><option>מדיח כלים</option><option>כללי</option></select>
     </div>
     <div class="table-scroll">
       <table><thead><tr><th>מס׳</th><th>תאריך</th><th>שעה</th><th>סוג</th><th>מיקום</th><th>מי פתח</th><th>תיאור</th><th>סטטוס</th><th></th></tr></thead>
@@ -827,7 +857,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   var baseline=(SEED.records||[]).map(function(r){r._base=true;return r;});
 
   // ---- runtime state ----
-  var state={items:[],depts:[],live:[],water:[],distributors:[],records:[],ac:[],budget:{},doors:[],calls:[]}; // come from db (or local fallback)
+  var state={items:[],depts:[],live:[],water:[],distributors:[],records:[],ac:[],budget:{},doors:[],calls:[],dishwashers:[]}; // come from db (or local fallback)
   var DEFAULT_DISTRIB=["אחמד אלחג","יחיא אבו בדר","נאדר שאמייה","עבד מחאמיד"];
   var db=null,user=null,DBMODE=false,canWrite=true,readOnly=false;
   var SB=null,SUPAMODE=false,_supaLoaded=false;
@@ -901,7 +931,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var rowsHtml='',spent=0;
     var items=state.items.slice().sort(function(a,b){return ((+b.cost||0)*((distY[b.name]||0)+(+b.stock||0)))-((+a.cost||0)*((distY[a.name]||0)+(+a.stock||0)));});
     items.forEach(function(i){var dd=distY[i.name]||0,tot=dd+(+i.stock||0),c=+i.cost||0,line=tot*c;spent+=line;
-      rowsHtml+='<tr><td>'+esc(i.name)+'</td><td class="num">'+(c?money(c):'—')+'</td><td class="num">'+nf(dd)+'</td><td class="num">'+nf(i.stock)+'</td><td class="num">'+(line?money(line):'—')+'</td></tr>';});
+      rowsHtml+='<tr><td>'+esc(i.name)+'</td><td><input type="number" min="0" step="0.01" inputmode="decimal" value="'+c+'" data-bcost="'+esc(i._id)+'" style="width:78px;padding:5px 7px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td><td class="num">'+nf(dd)+'</td><td><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-bstock="'+esc(i._id)+'" style="width:70px;padding:5px 7px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td><td class="num">'+(line?money(line):'—')+'</td></tr>';});
     if($("bgRows"))$("bgRows").innerHTML=items.length?rowsHtml:'<tr><td colspan="5" class="empty">אין פריטים</td></tr>';
     var left=budget-spent;
     if($("bgBudget"))$("bgBudget").textContent=money(budget);
@@ -921,15 +951,15 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function loadLocal(){
     state.items=(SEED.items||[]).map(function(i){return {_id:"i"+i.id,name:i.name,unit:i.unit,stock:i.stock,cost:+i.cost||0};});
     state.depts=(SEED.depts||[]).slice();
-    state.live=[]; try{state.water=JSON.parse(document.getElementById("waterSeed").textContent)||[];}catch(e){state.water=[];} state.distributors=DEFAULT_DISTRIB.slice(); state.ac=acSeedArr(); state.budget={}; state.doors=doorsSeedArr(); state.calls=[];
+    state.live=[]; try{state.water=JSON.parse(document.getElementById("waterSeed").textContent)||[];}catch(e){state.water=[];} state.distributors=DEFAULT_DISTRIB.slice(); state.ac=acSeedArr(); state.budget={}; state.doors=doorsSeedArr(); state.calls=[]; state.dishwashers=dishSeedArr();
     try{var raw=localStorage.getItem(LKEY);if(raw){var p=JSON.parse(raw);
-      if(p.items)state.items=p.items; if(p.depts)state.depts=p.depts; if(p.live)state.live=p.live; if(p.water)state.water=p.water; if(p.distributors)state.distributors=p.distributors; if(p.ac)state.ac=p.ac; if(p.budget)state.budget=p.budget; if(p.doors)state.doors=p.doors; if(p.calls)state.calls=p.calls;
+      if(p.items)state.items=p.items; if(p.depts)state.depts=p.depts; if(p.live)state.live=p.live; if(p.water)state.water=p.water; if(p.distributors)state.distributors=p.distributors; if(p.ac)state.ac=p.ac; if(p.budget)state.budget=p.budget; if(p.doors)state.doors=p.doors; if(p.calls)state.calls=p.calls; if(p.dishwashers)state.dishwashers=p.dishwashers;
     }}catch(e){}
   }
   function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify(state));}catch(e){}}
 
   /* ---------- render ---------- */
-  function renderAll(){ fillSelects(); renderDashboard(); renderHistory(); renderNav(); renderItems(); renderStock(); renderDepts(); renderDistributors(); renderReports(); renderWater(); renderAC(); initDoors(); renderCalls(); renderDistCtrl(); renderBudget(); applyWriteUI(); }
+  function renderAll(){ fillSelects(); renderDashboard(); renderHistory(); renderNav(); renderItems(); renderStock(); renderDepts(); renderDistributors(); renderReports(); renderWater(); renderAC(); initDoors(); renderCalls(); renderDish(); renderDistCtrl(); renderBudget(); applyWriteUI(); }
 
   function applyWriteUI(){
     var disabled=readOnly||(!canWrite&&DBMODE);
@@ -1048,7 +1078,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var tb=$("itemRows");
     if(state.items.length===0){tb.innerHTML='<tr><td colspan="6" class="empty">אין פריטים</td></tr>';return;}
     tb.innerHTML=state.items.map(function(i){
-      return '<tr><td>'+esc(i.name)+'</td><td>'+esc(i.unit||"יח׳")+'</td><td class="num">'+nf(i.stock)+'</td><td class="num">'+nf(distThisMonth(i.name))+'</td><td class="num">'+((+i.cost)?money(i.cost):'—')+'</td><td><button class="del" data-del-item="'+esc(i._id)+'" aria-label="מחיקה">×</button></td></tr>';
+      return '<tr><td>'+esc(i.name)+'</td><td>'+esc(i.unit||"יח׳")+'</td>'+'<td><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-istock="'+esc(i._id)+'" style="width:74px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td class="num">'+nf(distThisMonth(i.name))+'</td>'+'<td><input type="number" min="0" step="0.01" inputmode="decimal" value="'+(+i.cost||0)+'" data-icost="'+esc(i._id)+'" style="width:82px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td><div class="toolbar" style="margin:0;gap:6px;flex-wrap:nowrap"><button class="btn ghost" data-item-save="'+esc(i._id)+'" style="padding:6px 12px">עדכן</button><button class="del" data-del-item="'+esc(i._id)+'" aria-label="מחיקה">×</button></div></td></tr>';
     }).join("");
   }
 
@@ -1166,6 +1196,8 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   function updateCall(id,patch){ if(SUPAMODE){ var c=state.calls.filter(function(x){return x._id==id;})[0]; if(c){for(var k in patch)c[k]=patch[k];renderAll();} SB.from("calls").update(patch).eq("id",id).then(function(){}); } else { var c=state.calls.filter(function(x){return x._id==id;})[0]; if(c){for(var k in patch)c[k]=patch[k];saveLocal();renderAll();} } }
   function delCall(id){ if(SUPAMODE){ state.calls=state.calls.filter(function(x){return x._id!=id;}); renderAll(); SB.from("calls").delete().eq("id",id).then(function(){}); } else { state.calls=state.calls.filter(function(x){return x._id!=id;}); saveLocal(); renderAll(); } }
   function setBudget(y,amt){ state.budget[y]=amt; renderAll(); if(SUPAMODE){ SB.from("budgets").upsert({year:+y,amount:amt}).then(function(r){if(r&&r.error)toast("שמירת תקציב נכשלה — ודא שהטבלה budgets קיימת ב-Supabase");}); } else { saveLocal(); } }
+  function addDish(obj){ if(SUPAMODE){ obj._id="dw"+Date.now(); state.dishwashers.push(obj); renderAll(); SB.from("dishwashers").insert({id:obj._id,loc:obj.loc,dept:obj.dept}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה — ודא שהטבלה dishwashers קיימת");}); } else { obj._id="dw"+Date.now(); state.dishwashers.push(obj); saveLocal(); renderAll(); } }
+  function delDish(id){ if(SUPAMODE){ state.dishwashers=state.dishwashers.filter(function(x){return x._id!=id;}); renderAll(); SB.from("dishwashers").delete().eq("id",id).then(function(){}); } else { state.dishwashers=state.dishwashers.filter(function(x){return x._id!=id;}); saveLocal(); renderAll(); } }
   function addWater(obj){
     if(SUPAMODE){ obj._id=obj.serial||("w"+Date.now()); state.water.push(obj); renderAll(); SB.from("water_devices").upsert({serial:obj._id,loc:obj.loc,model:obj.model,note:obj.note}).then(function(){}); }
     else{ obj._id="L"+Date.now(); state.water.push(obj); saveLocal(); renderAll(); }
@@ -1217,7 +1249,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     $("main-pallets").hidden=(m!=="pallets");
     $("main-ac").hidden=(m!=="ac");
     $("main-water").hidden=(m!=="water");
-    $("main-doors").hidden=(m!=="doors");
+    $("main-doors").hidden=(m!=="doors");$("main-dish").hidden=(m!=="dish");
     $("main-calls").hidden=(m!=="calls");
     try{localStorage.setItem("meshek_main",m);}catch(e){}
     window.scrollTo(0,0);
@@ -1288,7 +1320,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   var armedDelete=null;
   function isArmed(type,id){return armedDelete===(type+":"+id);}
   function delBtn(type,id){var k=type+":"+esc(id);if(isArmed(type,id)){return '<button class="del-armed" data-delx="'+k+'">מחק ✓</button><button class="del-cancel" data-delcancel="1" aria-label="ביטול">↩</button>';}return '<button class="del" data-delx="'+k+'" aria-label="מחיקה">×</button>';}
-  function doDelete(k){var i=k.indexOf(":"),type=k.slice(0,i),id=k.slice(i+1);if(type==="ac")delAc(id);else if(type==="water")delWater(id);else if(type==="door")delDoor(id);else if(type==="call")delCall(id);}
+  function doDelete(k){var i=k.indexOf(":"),type=k.slice(0,i),id=k.slice(i+1);if(type==="ac")delAc(id);else if(type==="water")delWater(id);else if(type==="door")delDoor(id);else if(type==="call")delCall(id);else if(type==="dish")delDish(id);}
   document.addEventListener("click",function(ev){
     var t=ev.target;
     var rid=t.getAttribute&&t.getAttribute("data-del-rec"); if(rid){delRecord(rid);return;}
@@ -1297,6 +1329,8 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var dcx=t.getAttribute&&t.getAttribute("data-delcancel"); if(dcx){armedDelete=null;renderAll();return;}
     var dn=t.getAttribute&&t.getAttribute("data-del-dept"); if(dn){setDepts(state.depts.filter(function(d){return d!==dn;}));return;}
     var dx=t.getAttribute&&t.getAttribute("data-del-distrib"); if(dx){setDistributors(state.distributors.filter(function(d){return d!==dx;}));return;}
+    var isv=t.getAttribute&&t.getAttribute("data-item-save");
+    if(isv){var trr=t.closest("tr");var si=trr.querySelector('[data-istock]'),ci=trr.querySelector('[data-icost]');var sv=si?parseInt(si.value,10):NaN,cv=ci?parseFloat(ci.value):NaN;if(!isNaN(cv)&&cv>=0)setItemCost(isv,cv);if(!isNaN(sv)&&sv>=0)adjustStock(isv,sv);toast("עודכן ✓");return;}
     var sid=t.getAttribute&&t.getAttribute("data-supply-btn");
     if(sid){var inp=document.querySelector('[data-supply="'+sid+'"]');var val=parseInt(inp&&inp.value,10);
       var cinp=document.querySelector('[data-cost="'+sid+'"]');var cval=cinp?parseFloat(cinp.value):NaN;
@@ -1306,6 +1340,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
       return;}
   });
 
+  document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.getAttribute)return;var bc=t.getAttribute("data-bcost");if(bc!=null){var v=parseFloat(t.value);if(!isNaN(v)&&v>=0)setItemCost(bc,v);return;}var bs=t.getAttribute("data-bstock");if(bs!=null){var w=parseInt(t.value,10);if(!isNaN(w)&&w>=0)adjustStock(bs,w);return;}});
   $("hSearch").addEventListener("input",renderHistory);
   $("hDept").addEventListener("change",renderHistory);
   $("sSearch").addEventListener("input",renderStock);
@@ -1478,6 +1513,38 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   if($("callKindF"))$("callKindF").addEventListener("change",renderCalls);
   document.addEventListener("change",function(ev){var s=ev.target; if(!s||!s.getAttribute)return; var cid=s.getAttribute("data-callstatus"); if(cid){updateCall(cid,{status:s.value});}});
 
+  function dishSeedArr(){try{return (JSON.parse(document.getElementById("dishData").textContent)||[]).map(function(d,i){return {_id:d._id||("dw"+i),loc:d.loc||"",dept:d.dept||""};});}catch(e){return [];}}
+  function renderDish(){
+    var df=$("dishDeptF");
+    if(df){var depts={};state.dishwashers.forEach(function(x){if(x.dept)depts[x.dept]=1;});var dc=df.value;
+      df.innerHTML='<option value="">כל המחלקות</option>'+Object.keys(depts).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(d){return '<option>'+esc(d)+'</option>';}).join("");df.value=dc;}
+    var dl=document.getElementById("dwDeptList");
+    if(dl){var dep2={};state.dishwashers.forEach(function(x){if(x.dept)dep2[x.dept]=1;});dl.innerHTML=Object.keys(dep2).sort(function(a,b){return a.localeCompare(b,"he");}).map(function(d){return '<option value="'+esc(d)+'">';}).join("");}
+    var q=($("dishSearch")?$("dishSearch").value:"").trim(),dep=df?df.value:"";
+    var list=state.dishwashers.filter(function(x){
+      if(q&&(x.loc||"").indexOf(q)<0&&(x.dept||"").indexOf(q)<0)return false;
+      if(dep&&x.dept!==dep)return false;
+      return true;});
+    if($("dishSub"))$("dishSub").textContent="רשימת מדיחי הכלים — "+nf(list.length)+" מתוך "+nf(state.dishwashers.length)+" מדיחים.";
+    var tb=$("dishRows"); if(!tb)return;
+    if(list.length===0){tb.innerHTML='<tr><td colspan="4" class="empty">'+(state.dishwashers.length?"לא נמצאו מדיחים":"אין מדיחים")+'</td></tr>';return;}
+    tb.innerHTML=list.map(function(x,idx){
+      return '<tr'+(isArmed("dish",x._id)?' class="row-armed"':'')+'><td class="num">'+(idx+1)+'</td><td>'+esc(x.loc||"")+'</td><td><span class="chip">'+esc(x.dept||"—")+'</span></td><td>'+delBtn("dish",x._id)+'</td></tr>';
+    }).join("");
+  }
+  (function(){
+    var f=$("dishForm");
+    if(f)f.addEventListener("submit",function(ev){ev.preventDefault();
+      var loc=($("dwLoc").value||"").trim();
+      if(!loc){if($("dishHint"))$("dishHint").innerHTML='<span style="color:var(--crit)">יש להזין מיקום.</span>';return;}
+      addDish({loc:loc,dept:($("dwDept").value||"").trim()});
+      if($("dishHint"))$("dishHint").innerHTML='<span style="color:var(--good)">המדיח נוסף ✓</span>';toast("המדיח נוסף ✓");
+      this.reset();$("dwLoc").focus();
+    });
+    if($("dishSearch"))$("dishSearch").addEventListener("input",renderDish);
+    if($("dishDeptF"))$("dishDeptF").addEventListener("change",renderDish);
+  })();
+
   // ---- clock + weather (top info bar) ----
   function tickClock(){
     try{
@@ -1495,7 +1562,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     var el=$("ibWeather");if(!el||!d||!d.time)return;
     var now=$("ibNow"); if(now){now.innerHTML=(cur&&typeof cur.temperature_2m!=="undefined")?('<div class="wx-now"><span class="i">'+(WX[cur.weather_code]||"🌡️")+'</span><span>'+Math.round(cur.temperature_2m)+'°</span></div>'):'';}
     var html='<div class="wx-row">';
-    for(var i=0;i<d.time.length&&i<6;i++){
+    for(var i=0;i<d.time.length;i++){
       var hi=Math.round(d.temperature_2m_max[i]),lo=Math.round(d.temperature_2m_min[i]);
       html+='<div class="wx-day'+(i===0?" today":"")+'"><span class="d">'+(i===0?"היום":wxDayName(d.time[i]))+'</span><span class="i">'+(WX[d.weather_code[i]]||"•")+'</span><span class="t">'+hi+'°<span class="lo">'+lo+'°</span></span><span class="dt">'+wxDate(d.time[i])+'</span></div>';
     }
@@ -1503,7 +1570,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   }
   (function loadWeather(){
     try{
-      fetch("https://api.open-meteo.com/v1/forecast?latitude=32.51&longitude=35.01&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FJerusalem&forecast_days=6")
+      fetch("https://api.open-meteo.com/v1/forecast?latitude=32.51&longitude=35.01&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FJerusalem&forecast_days=16")
       .then(function(r){return r.json();})
       .then(function(j){ if(j&&j.daily)renderWeather(j.daily,j.current); else throw 0; })
       .catch(function(){ var el=$("ibWeather");if(el)el.innerHTML='<span class="ib-wloading">מזג האוויר יוצג באתר המקוון 🌤️</span>'; });
@@ -1540,13 +1607,16 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     else if(which==="doors")SB.from("doors").select("*").then(function(r){if(!(r&&r.data))return;
       if(r.data.length){state.doors=r.data.map(function(x){return {_id:x.id,num:x.num,maker:x.maker,supplier:x.supplier,serial:x.serial,loc:x.loc,svc_phone:x.svc_phone,contact:x.contact,mgr_phone:x.mgr_phone,email:x.email,notes:x.notes};});renderAll();}
       else if(!supaSeeded.doors&&state.doors&&state.doors.length){supaSeeded.doors=1;SB.from("doors").upsert(state.doors.map(function(d){return {id:d._id,num:d.num,maker:d.maker,supplier:d.supplier,serial:d.serial,loc:d.loc,svc_phone:d.svc_phone,contact:d.contact,mgr_phone:d.mgr_phone,email:d.email,notes:d.notes};})).then(function(){supaRefetch("doors");});}});
+    else if(which==="dishwashers")SB.from("dishwashers").select("*").then(function(r){if(!(r&&r.data))return;
+      if(r.data.length){state.dishwashers=r.data.map(function(x){return {_id:x.id,loc:x.loc,dept:x.dept};});renderAll();}
+      else if(!supaSeeded.dishwashers&&state.dishwashers&&state.dishwashers.length){supaSeeded.dishwashers=1;SB.from("dishwashers").upsert(state.dishwashers.map(function(w){return {id:w._id,loc:w.loc,dept:w.dept};})).then(function(){supaRefetch("dishwashers");});}});
   }
   (function(){
     if(!(window.supabase&&window.SUPA_URL&&window.SUPA_KEY)){ SUPAMODE=false; setStatus("local"); return; }
     try{ SB=window.supabase.createClient(window.SUPA_URL,window.SUPA_KEY); window.__SB=SB; }catch(e){ SB=null; }
     if(!SB){ SUPAMODE=false; setStatus("local"); return; }
     SUPAMODE=true; setStatus("connecting");
-    supaRefetch("items");supaRefetch("records");supaRefetch("departments");supaRefetch("distributors");supaRefetch("water");supaRefetch("ac");supaRefetch("budgets");supaRefetch("doors");supaRefetch("calls");
+    supaRefetch("items");supaRefetch("records");supaRefetch("departments");supaRefetch("distributors");supaRefetch("water");supaRefetch("ac");supaRefetch("budgets");supaRefetch("doors");supaRefetch("calls");supaRefetch("dishwashers");
     try{
       SB.channel("galam-rt")
         .on("postgres_changes",{event:"*",schema:"public",table:"items"},function(){supaRefetch("items");})
@@ -1558,6 +1628,7 @@ window.SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
         .on("postgres_changes",{event:"*",schema:"public",table:"budgets"},function(){supaRefetch("budgets");})
         .on("postgres_changes",{event:"*",schema:"public",table:"doors"},function(){supaRefetch("doors");})
         .on("postgres_changes",{event:"*",schema:"public",table:"calls"},function(){supaRefetch("calls");})
+        .on("postgres_changes",{event:"*",schema:"public",table:"dishwashers"},function(){supaRefetch("dishwashers");})
         .subscribe();
     }catch(e){}
   })();
