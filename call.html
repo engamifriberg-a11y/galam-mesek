@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0071e3">
 <title>פתיחת קריאת שירות — משק גלעם</title>
+<link rel="manifest" href="call.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="שירות משק">
+<link rel="apple-touch-icon" href="cookie-red-192.png">
+<link rel="icon" href="cookie-red-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Heebo:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -28,6 +34,10 @@ textarea{min-height:92px;resize:vertical}
 .btn:active{transform:translateY(1px)}
 .btn[disabled]{opacity:.6;cursor:default}
 .btn.sec{background:var(--surface-2);color:var(--accent);box-shadow:none;border:1px solid var(--line)}
+.install{width:100%;max-width:560px;margin:0 0 4px}
+.install .btn{margin-top:0}
+.install-cta{background:linear-gradient(135deg,#e53935,#c62828);color:#fff;box-shadow:0 6px 16px rgba(198,40,40,.28);border:none}
+.install-help{text-align:center;color:var(--muted);font-size:.86rem;margin-top:8px;line-height:1.5}
 .hint{min-height:20px;margin-top:12px;text-align:center;font-weight:600}
 .ok{color:var(--good)}.err{color:var(--crit)}
 .done{text-align:center;padding:12px 8px}
@@ -60,6 +70,12 @@ textarea{min-height:92px;resize:vertical}
     <div class="icon">🛠️</div>
     <h1>פתיחת קריאת שירות</h1>
     <p>משק גלעם — דווחו על תקלה ונטפל בה</p>
+  </div>
+
+  <!-- INSTALL -->
+  <div class="install" id="installBar">
+    <button class="btn install-cta" id="installBtn" type="button">📲 התקנת האפליקציה — שירות משק</button>
+    <div class="install-help" id="installHelp"></div>
   </div>
 
   <!-- FORM -->
@@ -212,6 +228,20 @@ textarea{min-height:92px;resize:vertical}
   }
   $("tbtn").addEventListener("click",doTrack);
   $("tnum").addEventListener("keydown",function(e){if(e.key==="Enter")doTrack();});
+
+  // ---- PWA install (שירות משק) ----
+  if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
+  var deferredPrompt=null, installBtn=$("installBtn"), installHelp=$("installHelp"), installBar=$("installBar");
+  function isStandalone(){ try{return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;}catch(e){return false;} }
+  function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent||""); }
+  if(isStandalone()&&installBar){ installBar.style.display="none"; }
+  window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); deferredPrompt=e; });
+  window.addEventListener("appinstalled",function(){ if(installHelp)installHelp.textContent="האפליקציה הותקנה ✓"; if(installBtn)installBtn.style.display="none"; });
+  if(installBtn)installBtn.addEventListener("click",function(){
+    if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(function(){ deferredPrompt=null; }); }
+    else if(isIOS()){ installHelp.innerHTML="להתקנה ב-iPhone: לחצו על <b>שיתוף</b> ↑ ואז על <b>הוסף למסך הבית</b>."; }
+    else { installHelp.innerHTML="בתפריט הדפדפן (⋮) בחרו <b>התקן אפליקציה</b> / <b>Add to Home screen</b>."; }
+  });
 })();
 </script>
 </body>
