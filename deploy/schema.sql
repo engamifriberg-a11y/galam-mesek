@@ -8,7 +8,7 @@
 -- ---- tables -------------------------------------------------------------
 create table if not exists items (
   id text primary key, name text, unit text,
-  stock integer default 0, cost numeric default 0);
+  stock integer default 0, cost numeric default 0, sku text, min_stock integer default 0);
 
 create table if not exists departments  (name text primary key);
 create table if not exists distributors (name text primary key);

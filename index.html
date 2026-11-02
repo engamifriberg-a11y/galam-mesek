@@ -466,7 +466,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       <select class="selbox" id="sFilter"><option value="">הכל</option><option value="low">מלאי נמוך</option><option value="out">אזל</option></select>
     </div>
     <div class="table-scroll">
-      <table><thead><tr><th>פריט</th><th>מלאי</th><th>סטטוס</th><th>עלות ₪ ליח׳</th><th>עדכון מלאי נוכחי</th></tr></thead>
+      <table><thead><tr><th>פריט</th><th>מק״ט</th><th>מלאי</th><th>סטטוס</th><th>עלות ₪ ליח׳</th><th>עדכון מלאי נוכחי</th><th>מלאי מינימום</th><th>המלצת הצטיידות</th></tr></thead>
       <tbody id="stockRows"></tbody></table>
     </div>
     <div class="hint">סטטוס: אזל = 0 · נמוך = עד 10 יחידות · תקין = מעל 10.</div>
@@ -1092,6 +1092,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
   }
 
   function stockStatus(n){if(n<=0)return ["out","אזל"];if(n<=10)return ["low","נמוך"];return ["ok","תקין"];}
+  function restockRec(i){var mn=+i.min||0;if(mn<=0)return '<span style="color:var(--muted)">—</span>';var need=mn-(+i.stock||0);if(need>0)return '<span class="chip" style="background:#ff3b3022;color:#ff3b30;border:1px solid #ff3b3066;font-weight:800;white-space:nowrap">להזמין '+nf(need)+' '+esc(i.unit||"")+'</span>';return '<span class="chip" style="background:#34c75922;color:#34c759;border:1px solid #34c75966;font-weight:800">תקין</span>';}
   function renderStock(){
     var q=($("sSearch").value||"").trim(),f=$("sFilter").value;
     var list=state.items.slice().sort(function(a,b){return a.stock-b.stock;});
@@ -1099,10 +1100,10 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     if(f==="low")list=list.filter(function(i){return i.stock>0&&i.stock<=10;});
     if(f==="out")list=list.filter(function(i){return i.stock<=0;});
     var tb=$("stockRows");
-    if(list.length===0){tb.innerHTML='<tr><td colspan="5" class="empty">אין פריטים</td></tr>';return;}
+    if(list.length===0){tb.innerHTML='<tr><td colspan="8" class="empty">אין פריטים</td></tr>';return;}
     tb.innerHTML=list.map(function(i){
       var st=stockStatus(i.stock);
-      return '<tr><td>'+esc(i.name)+'</td><td class="num">'+nf(i.stock)+' <span style="color:var(--muted);font-weight:500;font-size:.8rem">'+esc(i.unit||"")+'</span></td><td><span class="pill '+st[0]+'">'+st[1]+'</span></td><td><input type="number" min="0" step="0.01" inputmode="decimal" value="'+(+i.cost||0)+'" data-cost="'+esc(i._id)+'" style="width:84px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td><td><div class="toolbar" style="margin:0;gap:6px"><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-supply="'+esc(i._id)+'" style="width:78px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"><button class="btn ghost" data-supply-btn="'+esc(i._id)+'" style="padding:6px 12px">עדכן</button></div></td></tr>';
+      return '<tr><td>'+esc(i.name)+'</td>'+'<td><input type="text" value="'+esc(i.sku||"")+'" data-sku="'+esc(i._id)+'" placeholder="מק״ט" style="width:96px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink)"></td>'+'<td class="num">'+nf(i.stock)+' <span style="color:var(--muted);font-weight:500;font-size:.8rem">'+esc(i.unit||"")+'</span></td>'+'<td><span class="pill '+st[0]+'">'+st[1]+'</span></td>'+'<td><input type="number" min="0" step="0.01" inputmode="decimal" value="'+(+i.cost||0)+'" data-cost="'+esc(i._id)+'" style="width:84px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td><div class="toolbar" style="margin:0;gap:6px"><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-supply="'+esc(i._id)+'" style="width:78px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"><button class="btn ghost" data-supply-btn="'+esc(i._id)+'" style="padding:6px 12px">עדכן</button></div></td>'+'<td><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.min||0)+'" data-min="'+esc(i._id)+'" style="width:74px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td>'+restockRec(i)+'</td></tr>';
     }).join("");
   }
 
@@ -1197,6 +1198,8 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     else{ var it=state.items.filter(function(i){return i._id==id;})[0]; if(it){it.stock=newStock;saveLocal();renderAll();} }
   }
   function setItemCost(id,cost){ if(SUPAMODE){ var it=state.items.filter(function(i){return i._id==id;})[0]; if(it){it.cost=cost;renderAll();} SB.from("items").update({cost:cost}).eq("id",id).then(function(){}); } else { var it=state.items.filter(function(i){return i._id==id;})[0]; if(it){it.cost=cost;saveLocal();renderAll();} } }
+  function setItemSku(id,sku){ var it=state.items.filter(function(i){return i._id==id;})[0]; if(!it)return; it.sku=sku; if(SUPAMODE){ renderAll(); SB.from("items").update({sku:sku}).eq("id",id).then(function(){}); } else { saveLocal(); renderAll(); } }
+  function setItemMin(id,mn){ var it=state.items.filter(function(i){return i._id==id;})[0]; if(!it)return; it.min=mn; if(SUPAMODE){ renderAll(); SB.from("items").update({min_stock:mn}).eq("id",id).then(function(){}); } else { saveLocal(); renderAll(); } }
   function addAc(obj){ if(SUPAMODE){ obj._id=obj.num; state.ac.push(obj); renderAll(); SB.from("air_conditioners").upsert({num:obj.num,loc:obj.loc,model:obj.model,type:obj.type}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה");}); } else { obj._id=obj.num||("a"+Date.now()); state.ac.push(obj); saveLocal(); renderAll(); } }
   function delAc(id){ if(SUPAMODE){ state.ac=state.ac.filter(function(a){return a._id!=id;}); renderAll(); SB.from("air_conditioners").delete().eq("num",id).then(function(){}); } else { state.ac=state.ac.filter(function(a){return a._id!=id;}); saveLocal(); renderAll(); } }
   function addDoor(obj){ if(SUPAMODE){ obj._id="dr"+Date.now(); state.doors.push(obj); renderAll(); SB.from("doors").insert({id:obj._id,num:obj.num,maker:obj.maker,supplier:obj.supplier,serial:obj.serial,loc:obj.loc,svc_phone:obj.svc_phone,contact:obj.contact,mgr_phone:obj.mgr_phone,email:obj.email,notes:obj.notes}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה — ודא שהטבלה doors קיימת");}); } else { obj._id="dr"+Date.now(); state.doors.push(obj); saveLocal(); renderAll(); } }
@@ -1354,8 +1357,12 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     var sid=t.getAttribute&&t.getAttribute("data-supply-btn");
     if(sid){var inp=document.querySelector('[data-supply="'+sid+'"]');var val=parseInt(inp&&inp.value,10);
       var cinp=document.querySelector('[data-cost="'+sid+'"]');var cval=cinp?parseFloat(cinp.value):NaN;
+      var skn=document.querySelector('[data-sku="'+sid+'"]');var skv=skn?(skn.value||"").trim():null;
+      var mnn=document.querySelector('[data-min="'+sid+'"]');var mnv=mnn?parseInt(mnn.value,10):NaN;
       if(!isNaN(cval)&&cval>=0)setItemCost(sid,cval);
       if(!isNaN(val)&&val>=0)adjustStock(sid,val);
+      if(skv!==null)setItemSku(sid,skv);
+      if(!isNaN(mnv)&&mnv>=0)setItemMin(sid,mnv);
       toast("עודכן ✓");
       return;}
   });
@@ -1618,7 +1625,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
   function supaRefetch(which){
     if(!SUPAMODE)return;
     if(which==="items")SB.from("items").select("*").then(function(r){if(!(r&&r.data))return;
-      if(r.data.length){state.items=r.data.map(function(x){return {_id:x.id,name:x.name,unit:x.unit,stock:+x.stock||0,cost:+x.cost||0};}).sort(function(a,b){return (a.name||"").localeCompare(b.name||"","he");});renderAll();}
+      if(r.data.length){state.items=r.data.map(function(x){return {_id:x.id,name:x.name,unit:x.unit,stock:+x.stock||0,cost:+x.cost||0,sku:x.sku||"",min:(x.min_stock!=null?+x.min_stock:0)};}).sort(function(a,b){return (a.name||"").localeCompare(b.name||"","he");});renderAll();}
       else if(!supaSeeded.items&&state.items&&state.items.length){supaSeeded.items=1;SB.from("items").upsert(state.items.map(function(i){return {id:i._id,name:i.name,unit:i.unit,stock:i.stock,cost:i.cost||0};})).then(function(){supaRefetch("items");});}});
     else if(which==="records")SB.from("records").select("*").then(function(r){if(r&&r.data){state.records=r.data.map(function(x){return {_id:x.id,date:x.date,time:x.time||"",dept:x.dept,item:x.item,qty:+x.qty||0,by:x["by"]||"",note:x.note||""};});_supaLoaded=true;renderAll();setStatus("live");}});
     else if(which==="departments")SB.from("departments").select("*").then(function(r){if(!(r&&r.data))return;
