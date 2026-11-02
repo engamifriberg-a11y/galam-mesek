@@ -274,9 +274,10 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
 #pallets h1{font-family:var(--font-display);font-size:1.55rem;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
 #pallets h2{font-family:var(--font-display);font-size:1.08rem;font-weight:700;margin:0 0 14px}
 #pallets .sub{color:var(--muted);font-size:.92rem;margin-bottom:18px;line-height:1.45}
-#pallets .ptabs{border:0;position:static;background:none;display:flex;gap:6px;overflow-x:auto;padding:4px 0 14px;margin:0 0 6px;scrollbar-width:none}
-#pallets .ptabs::-webkit-scrollbar{display:none}
-#pallets .ptab{flex:none;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font-weight:600;font-size:.88rem;padding:8px 15px;margin:0;box-shadow:var(--shadow);transition:background .2s,color .2s}
+#pallets .ptabs{border:0;position:static;background:none;display:flex;gap:6px;overflow-x:auto;padding:4px 14px 12px;margin:0 0 6px;scroll-padding-inline:14px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:thin}
+#pallets .ptabs::-webkit-scrollbar{height:7px}#pallets .ptabs::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:999px}#pallets .ptabs::-webkit-scrollbar-track{background:transparent}
+@media(min-width:760px){#pallets .ptabs{flex-wrap:wrap;overflow-x:visible}}
+#pallets .ptab{flex:none;border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line));border-radius:999px;background:color-mix(in srgb,var(--accent) 9%,var(--surface));color:var(--accent);font-weight:700;font-size:.88rem;padding:7px 14px;margin:0;box-shadow:var(--shadow);transition:background .2s,color .2s}
 #pallets .ptab.on{background:var(--accent);color:#fff;border-color:transparent}
 #pallets .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
 #pallets .kpis{gap:12px;margin-bottom:0}
