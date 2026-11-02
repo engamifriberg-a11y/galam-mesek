@@ -150,6 +150,17 @@ td{border-bottom:1px solid var(--line)}
 tr:last-child td{border-bottom:none}
 td.num{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
 .chip{display:inline-block;padding:3px 11px;border-radius:999px;font-size:.76rem;font-weight:600;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.callcards{display:flex;flex-direction:column;gap:12px}
+.callcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px 15px}
+.callcard.row-armed{opacity:.55;text-decoration:line-through}
+.cc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.cc-id{font-family:var(--font-display);font-weight:800;color:var(--accent);font-size:1.05rem}
+.cc-grow{flex:1}
+.cc-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:.92rem;border-top:1px solid var(--line)}
+.cc-row span:last-child{text-align:left;font-weight:600}
+.cc-k{color:var(--muted);font-weight:700;white-space:nowrap}
+.cc-desc{margin-top:8px;padding:9px 11px;background:var(--surface-2);border-radius:10px;font-size:.92rem;line-height:1.5;white-space:pre-wrap}
+.cc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 .row-armed td{opacity:.6;text-decoration:line-through}
 .row-armed td:last-child{text-decoration:none;opacity:1}
 .del-armed{background:var(--crit);color:#fff;border:none;border-radius:8px;padding:4px 11px;font-weight:700;font-size:.8rem;cursor:pointer;white-space:nowrap}
@@ -814,10 +825,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       <select class="selbox" id="callStatusF"><option value="">כל הסטטוסים</option><option>חדש</option><option>בטיפול</option><option>טופל</option></select>
       <select class="selbox" id="callKindF"><option value="">כל הסוגים</option><option>מזגן</option><option>דלת</option><option>תמי4</option><option>מדיח כלים</option><option>כיבוד/חלב</option><option>כללי</option></select>
     </div>
-    <div class="table-scroll">
-      <table><thead><tr><th>מס׳</th><th>תאריך</th><th>שעה</th><th>סוג</th><th>מיקום</th><th>מי פתח</th><th>תיאור</th><th>סטטוס</th><th>דחיפות</th><th></th></tr></thead>
-      <tbody id="callsRows"></tbody></table>
-    </div>
+    <div id="callsRows" class="callcards"></div>
   </section>
 
 <footer>כל הזכויות שמורות &copy; עמי פרייברג</footer>
@@ -1503,9 +1511,16 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     var openN=(state.calls||[]).filter(function(c){return c.status!=="טופל";}).length;
     if($("callsSub"))$("callsSub").textContent="סה״כ "+nf((state.calls||[]).length)+" קריאות · "+nf(openN)+" פתוחות";
     var tb=$("callsRows"); if(!tb)return;
-    if(list.length===0){tb.innerHTML='<tr><td colspan="10" class="empty">אין קריאות</td></tr>';return;}
+    if(list.length===0){tb.innerHTML='<div class="empty">אין קריאות</div>';return;}
     tb.innerHTML=list.map(function(c){
-      return '<tr'+(isArmed("call",c._id)?' class="row-armed"':'')+'><td class="num" style="font-weight:700;color:var(--accent)">'+(c.num!=null?('#'+esc(c.num)):'—')+'</td><td class="num">'+esc(c.cdate||"")+'</td><td class="num">'+esc(c.ctime||"")+'</td><td><span class="chip">'+esc(c.kind||"")+'</span></td><td>'+esc(c.loc||"")+'</td><td>'+esc(c.who||"")+'</td><td style="max-width:240px">'+esc(c.descr||"")+'</td><td>'+callStatusSelect(c)+'</td><td>'+urgBadge(c.urgency)+'</td><td>'+delBtn("call",c._id)+'</td></tr>';
+      return '<div class="callcard'+(isArmed("call",c._id)?' row-armed':'')+'">'+
+        '<div class="cc-head"><span class="cc-id">'+(c.num!=null?('#'+esc(c.num)):'—')+'</span><span class="chip">'+esc(c.kind||"")+'</span>'+urgBadge(c.urgency)+'<span class="cc-grow"></span>'+delBtn("call",c._id)+'</div>'+
+        '<div class="cc-row"><span class="cc-k">מיקום</span><span>'+(esc(c.loc||"")||"—")+'</span></div>'+
+        '<div class="cc-row"><span class="cc-k">מי פתח</span><span>'+(esc(c.who||"")||"—")+'</span></div>'+
+        '<div class="cc-row"><span class="cc-k">נפתחה</span><span>'+esc(c.cdate||"")+' '+esc(c.ctime||"")+'</span></div>'+
+        (c.descr?'<div class="cc-desc">'+esc(c.descr)+'</div>':'')+
+        '<div class="cc-foot"><span class="cc-k">סטטוס</span>'+callStatusSelect(c)+'</div>'+
+      '</div>';
     }).join("");
   }
   (function(){ var n=new Date(); if($("cDate"))$("cDate").value=n.toISOString().slice(0,10); if($("cTime"))$("cTime").value=n.toTimeString().slice(0,5); })();
