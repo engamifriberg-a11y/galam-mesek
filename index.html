@@ -402,7 +402,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
         </div>
         <div class="hint" style="margin:0 0 10px">פריטים וכמויות (ניתן לבחור כמה פריטים יחד)</div>
         <div class="table-scroll">
-          <table><thead><tr><th>פריט</th><th>מלאי נוכחי</th><th>כמות לחלוקה</th></tr></thead>
+          <table><thead><tr><th>פריט</th><th>מק״ט</th><th>מלאי נוכחי</th><th>כמות לחלוקה</th></tr></thead>
           <tbody id="distItems"></tbody></table>
         </div>
         <button type="submit" class="btn block" style="margin-top:14px">הוספה</button>
@@ -449,11 +449,12 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
         <div class="field"><label for="iUnit">יחידת מידה</label><input type="text" id="iUnit" placeholder="יח׳ / ק״ג / ליטר" value="יח׳"></div>
         <div class="field"><label for="iStock">מלאי התחלתי</label><input type="number" id="iStock" min="0" step="1" inputmode="numeric" value="0"></div>
         <div class="field"><label for="iCost">עלות ליח׳ (₪)</label><input type="number" id="iCost" min="0" step="0.01" inputmode="decimal" placeholder="0" value="0"></div>
+        <div class="field"><label for="iSku">מק״ט (לא חובה)</label><input type="text" id="iSku" placeholder="מק״ט"></div>
         <button type="submit" class="btn block" style="grid-column:1/-1">הוסף פריט</button>
       </form>
     </div>
     <div class="table-scroll">
-      <table><thead><tr><th>פריט</th><th>יחידה</th><th>מלאי</th><th>חולק החודש</th><th>עלות ₪</th><th></th></tr></thead>
+      <table><thead><tr><th>פריט</th><th>מק״ט</th><th>יחידה</th><th>מלאי</th><th>חולק החודש</th><th>עלות ₪</th><th></th></tr></thead>
       <tbody id="itemRows"></tbody></table>
     </div>
   </section>
@@ -1086,9 +1087,9 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
 
   function renderItems(){
     var tb=$("itemRows");
-    if(state.items.length===0){tb.innerHTML='<tr><td colspan="6" class="empty">אין פריטים</td></tr>';return;}
+    if(state.items.length===0){tb.innerHTML='<tr><td colspan="7" class="empty">אין פריטים</td></tr>';return;}
     tb.innerHTML=state.items.map(function(i){
-      return '<tr><td>'+esc(i.name)+'</td><td>'+esc(i.unit||"יח׳")+'</td>'+'<td><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-istock="'+esc(i._id)+'" style="width:74px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td class="num">'+nf(distThisMonth(i.name))+'</td>'+'<td><input type="number" min="0" step="0.01" inputmode="decimal" value="'+(+i.cost||0)+'" data-icost="'+esc(i._id)+'" style="width:82px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td><div class="toolbar" style="margin:0;gap:6px;flex-wrap:nowrap"><button class="btn ghost" data-item-save="'+esc(i._id)+'" style="padding:6px 12px">עדכן</button><button class="del" data-del-item="'+esc(i._id)+'" aria-label="מחיקה">×</button></div></td></tr>';
+      return '<tr><td>'+esc(i.name)+'</td>'+'<td><input type="text" value="'+esc(i.sku||"")+'" data-isku="'+esc(i._id)+'" placeholder="מק״ט" style="width:92px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink)"></td>'+'<td>'+esc(i.unit||"יח׳")+'</td>'+'<td><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-istock="'+esc(i._id)+'" style="width:74px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td class="num">'+nf(distThisMonth(i.name))+'</td>'+'<td><input type="number" min="0" step="0.01" inputmode="decimal" value="'+(+i.cost||0)+'" data-icost="'+esc(i._id)+'" style="width:82px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td><div class="toolbar" style="margin:0;gap:6px;flex-wrap:nowrap"><button class="btn ghost" data-item-save="'+esc(i._id)+'" style="padding:6px 12px">עדכן</button><button class="del" data-del-item="'+esc(i._id)+'" aria-label="מחיקה">×</button></div></td></tr>';
     }).join("");
   }
 
@@ -1104,7 +1105,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     if(list.length===0){tb.innerHTML='<tr><td colspan="8" class="empty">אין פריטים</td></tr>';return;}
     tb.innerHTML=list.map(function(i){
       var st=stockStatus(i.stock);
-      return '<tr><td>'+esc(i.name)+'</td>'+'<td><input type="text" value="'+esc(i.sku||"")+'" data-sku="'+esc(i._id)+'" placeholder="מק״ט" style="width:96px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink)"></td>'+'<td class="num">'+nf(i.stock)+' <span style="color:var(--muted);font-weight:500;font-size:.8rem">'+esc(i.unit||"")+'</span></td>'+'<td><span class="pill '+st[0]+'">'+st[1]+'</span></td>'+'<td><input type="number" min="0" step="0.01" inputmode="decimal" value="'+(+i.cost||0)+'" data-cost="'+esc(i._id)+'" style="width:84px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td><div class="toolbar" style="margin:0;gap:6px"><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-supply="'+esc(i._id)+'" style="width:78px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"><button class="btn ghost" data-supply-btn="'+esc(i._id)+'" style="padding:6px 12px">עדכן</button></div></td>'+'<td><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.min||0)+'" data-min="'+esc(i._id)+'" style="width:74px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td>'+restockRec(i)+'</td></tr>';
+      return '<tr><td>'+esc(i.name)+'</td>'+'<td><input type="text" value="'+esc(i.sku||"")+'" data-sku="'+esc(i._id)+'" placeholder="מק״ט" style="width:96px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink)"></td>'+'<td class="num">'+nf(i.stock)+' <span style="color:var(--muted);font-weight:500;font-size:.8rem">'+esc(i.unit||"")+'</span></td>'+'<td><span class="pill '+st[0]+'">'+st[1]+'</span></td>'+'<td><input type="number" min="0" step="0.01" inputmode="decimal" value="'+(+i.cost||0)+'" data-cost="'+esc(i._id)+'" style="width:84px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td><div class="toolbar" style="margin:0;gap:6px;flex-wrap:nowrap"><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.stock||0)+'" data-supply="'+esc(i._id)+'" style="width:78px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"><button class="btn ghost" data-supply-btn="'+esc(i._id)+'" style="padding:6px 12px">עדכן</button></div></td>'+'<td><input type="number" min="0" step="1" inputmode="numeric" value="'+(+i.min||0)+'" data-min="'+esc(i._id)+'" style="width:74px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td>'+'<td>'+restockRec(i)+'</td></tr>';
     }).join("");
   }
 
@@ -1133,10 +1134,10 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     var tb=$("distItems");if(!tb)return;
     // preserve any quantities the user already typed
     var typed={};tb.querySelectorAll("input[data-qi]").forEach(function(i){if(i.value)typed[i.getAttribute("data-qi")]=i.value;});
-    if(state.items.length===0){tb.innerHTML='<tr><td colspan="3" class="empty">אין פריטים</td></tr>';return;}
+    if(state.items.length===0){tb.innerHTML='<tr><td colspan="4" class="empty">אין פריטים</td></tr>';return;}
     tb.innerHTML=state.items.map(function(i){
       var st=stockStatus(i.stock),v=typed[i._id]||"";
-      return '<tr><td>'+esc(i.name)+'</td><td class="num"><span class="pill '+st[0]+'" style="min-width:34px;text-align:center">'+nf(i.stock)+'</span></td>'+
+      return '<tr><td>'+esc(i.name)+'</td><td style="color:var(--muted)">'+(esc(i.sku||"")||"—")+'</td><td class="num"><span class="pill '+st[0]+'" style="min-width:34px;text-align:center">'+nf(i.stock)+'</span></td>'+
         '<td><input type="number" min="0" step="1" inputmode="numeric" data-qi="'+esc(i._id)+'" value="'+v+'" placeholder="0" style="width:90px;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums"></td></tr>';
     }).join("");
   }
@@ -1187,7 +1188,11 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     }
   }
   function addItem(obj){
-    if(SUPAMODE){ obj._id="i"+Date.now(); state.items.push(obj); renderAll(); SB.from("items").insert({id:obj._id,name:obj.name,unit:obj.unit,stock:obj.stock,cost:obj.cost||0}).then(function(){}); }
+    if(SUPAMODE){ obj._id="i"+Date.now(); state.items.push(obj); renderAll();
+      var p={id:obj._id,name:obj.name,unit:obj.unit,stock:obj.stock,cost:obj.cost||0,sku:obj.sku||""};
+      function ins(pp,again){ SB.from("items").insert(pp).then(function(r){ if(r&&r.error&&again&&/sku/i.test((r.error.message||"")+(r.error.details||""))){ var p2={}; for(var k in pp){ if(k!=="sku")p2[k]=pp[k]; } ins(p2,false); } }); }
+      ins(p,true);
+    }
     else{ obj._id="L"+Date.now(); state.items.push(obj); saveLocal(); renderAll(); }
   }
   function delItem(id){
@@ -1314,7 +1319,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     ev.preventDefault();
     var nm=$("iName").value.trim();if(!nm)return;
     if(itemByName(nm)){$("iName").focus();return;}
-    addItem({name:nm,unit:$("iUnit").value.trim()||"יח׳",stock:parseInt($("iStock").value,10)||0,cost:parseFloat($("iCost").value)||0});
+    addItem({name:nm,unit:$("iUnit").value.trim()||"יח׳",stock:parseInt($("iStock").value,10)||0,cost:parseFloat($("iCost").value)||0,sku:($("iSku")?$("iSku").value.trim():"")});
     this.reset();$("iUnit").value="יח׳";$("iStock").value=0;$("iCost").value=0;$("iName").focus();
   });
 
@@ -1354,7 +1359,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     var dn=t.getAttribute&&t.getAttribute("data-del-dept"); if(dn){setDepts(state.depts.filter(function(d){return d!==dn;}));return;}
     var dx=t.getAttribute&&t.getAttribute("data-del-distrib"); if(dx){setDistributors(state.distributors.filter(function(d){return d!==dx;}));return;}
     var isv=t.getAttribute&&t.getAttribute("data-item-save");
-    if(isv){var trr=t.closest("tr");var si=trr.querySelector('[data-istock]'),ci=trr.querySelector('[data-icost]');var sv=si?parseInt(si.value,10):NaN,cv=ci?parseFloat(ci.value):NaN;if(!isNaN(cv)&&cv>=0)setItemCost(isv,cv);if(!isNaN(sv)&&sv>=0)adjustStock(isv,sv);toast("עודכן ✓");return;}
+    if(isv){var trr=t.closest("tr");var si=trr.querySelector('[data-istock]'),ci=trr.querySelector('[data-icost]'),ski=trr.querySelector('[data-isku]');var sv=si?parseInt(si.value,10):NaN,cv=ci?parseFloat(ci.value):NaN,skv=ski?(ski.value||"").trim():null;if(!isNaN(cv)&&cv>=0)setItemCost(isv,cv);if(!isNaN(sv)&&sv>=0)adjustStock(isv,sv);if(skv!==null)setItemSku(isv,skv);toast("עודכן ✓");return;}
     var sid=t.getAttribute&&t.getAttribute("data-supply-btn");
     if(sid){var inp=document.querySelector('[data-supply="'+sid+'"]');var val=parseInt(inp&&inp.value,10);
       var cinp=document.querySelector('[data-cost="'+sid+'"]');var cval=cinp?parseFloat(cinp.value):NaN;
