@@ -394,6 +394,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
         <div class="form-grid" style="margin-bottom:14px">
           <div class="field"><label for="dDept">מחלקה</label><select id="dDept" required></select></div>
           <div class="field"><label for="dDate">תאריך</label><input type="date" id="dDate" required></div>
+          <div class="field"><label for="dTime">שעה</label><input type="time" id="dTime"></div>
           <div class="field"><label for="dBy">שם המחלק</label><select id="dBy"></select></div>
           <div class="field"><label for="dNote">הערה (לא חובה)</label><input type="text" id="dNote" placeholder="—"></div>
         </div>
@@ -1050,7 +1051,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     tb.innerHTML=list.slice(0,300).map(function(r){
       var dt=r.date?r.date.split("-").reverse().join("/"):"";
       var delCell=r._base?'<span style="color:var(--muted);font-size:.9rem" title="רשומת היסטוריה">🔒</span>':'<button class="del" data-del-rec="'+esc(r._id)+'" aria-label="מחיקה">×</button>';
-      return '<tr><td style="white-space:nowrap">'+dt+'</td><td><span class="chip">'+esc(r.dept)+'</span></td><td>'+esc(r.item)+'</td><td class="num">'+nf(r.qty)+'</td><td>'+esc(r.by||"—")+'</td><td style="color:var(--muted)">'+esc(r.note||"—")+'</td><td>'+delCell+'</td></tr>';
+      return '<tr><td style="white-space:nowrap">'+dt+(r.time?'<div style="font-size:.78rem;color:var(--muted);font-weight:600">'+esc(r.time)+'</div>':'')+'</td><td><span class="chip">'+esc(r.dept)+'</span></td><td>'+esc(r.item)+'</td><td class="num">'+nf(r.qty)+'</td><td>'+esc(r.by||"—")+'</td><td style="color:var(--muted)">'+esc(r.note||"—")+'</td><td>'+delCell+'</td></tr>';
     }).join("")+(list.length>300?'<tr><td colspan="7" class="empty">מוצגות 300 הרשומות האחרונות מתוך '+nf(list.length)+'</td></tr>':'');
   }
 
@@ -1174,7 +1175,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       if(item){item.stock=Math.max(0,(item.stock||0)-rec.qty);}
       state.records.push(rec); renderAll();
       try{saveLocal();}catch(e){}
-      SB.from("records").insert({id:rec._id,date:rec.date,dept:rec.dept,item:rec.item,qty:rec.qty,"by":rec.by||"",note:rec.note||""}).then(function(r){ if(r&&r.error){ try{saveLocal();}catch(e){} toast("שמירה בענן נכשלה — נשמר במכשיר. ודא שהטבלאות הוקמו ב-Supabase"); } });
+      (function(){ function insRec(p,again){ SB.from("records").insert(p).then(function(r){ if(r&&r.error){ if(again&&/\btime\b/i.test((r.error.message||"")+(r.error.details||""))){ var p2={}; for(var k in p){ if(k!=="time")p2[k]=p[k]; } insRec(p2,false); return; } try{saveLocal();}catch(e){} toast("שמירה בענן נכשלה — נשמר במכשיר. ודא שהטבלאות הוקמו ב-Supabase"); } }); } insRec({id:rec._id,date:rec.date,time:rec.time||"",dept:rec.dept,item:rec.item,qty:rec.qty,"by":rec.by||"",note:rec.note||""},true); })();
       if(item&&item._id)SB.from("items").update({stock:item.stock}).eq("id",item._id).then(function(){});
     }else{
       rec._id="L"+Date.now(); state.live.push(rec);
@@ -1247,8 +1248,13 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     else{ state.depts=list; saveLocal(); renderAll(); }
   }
   function delRecord(id){
-    if(SUPAMODE){ state.records=state.records.filter(function(r){return r._id!=id;}); renderAll(); SB.from("records").delete().eq("id",id).then(function(){}); }
-    else{ state.live=state.live.filter(function(r){return r._id!=id;}); saveLocal(); renderAll(); }
+    var rec=(state.records||[]).filter(function(r){return r._id==id;})[0]||(state.live||[]).filter(function(r){return r._id==id;})[0];
+    if(SUPAMODE){
+      state.records=state.records.filter(function(r){return r._id!=id;});
+      if(rec){ var it=state.items.filter(function(i){return i.name===rec.item;})[0]; if(it){ it.stock=(it.stock||0)+(+rec.qty||0); if(it._id)SB.from("items").update({stock:it.stock}).eq("id",it._id).then(function(){}); toast("הוחזר למלאי: "+rec.item+" ("+nf(+rec.qty||0)+")"); } }
+      renderAll(); SB.from("records").delete().eq("id",id).then(function(){});
+    }
+    else{ state.live=state.live.filter(function(r){return r._id!=id;}); if(rec){var it=state.items.filter(function(i){return i.name===rec.item;})[0];if(it)it.stock=(it.stock||0)+(+rec.qty||0);} saveLocal(); renderAll(); }
   }
 
   /* ---------- events ---------- */
@@ -1279,7 +1285,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
 
   $("distForm").addEventListener("submit",function(ev){
     ev.preventDefault();
-    var dept=$("dDept").value,date=$("dDate").value||new Date().toISOString().slice(0,10),by=($("dBy").value||"").trim(),note=($("dNote").value||"").trim();
+    var dept=$("dDept").value,date=$("dDate").value||new Date().toISOString().slice(0,10),by=($("dBy").value||"").trim(),note=($("dNote").value||"").trim(),time=($("dTime")?$("dTime").value:"")||new Date().toTimeString().slice(0,5);
     if(!dept){$("distHint").innerHTML='<span style="color:var(--crit)">יש לבחור מחלקה.</span>';return;}
     // gather all items with a quantity
     var entries=[];
@@ -1290,7 +1296,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     var over=entries.filter(function(e){return (e.it.stock||0)<e.qty;});
     if(over.length){$("distHint").innerHTML='<span style="color:var(--crit)">אין מספיק מלאי: '+over.map(function(e){return esc(e.it.name)+" (קיים "+nf(e.it.stock)+")";}).join(", ")+'</span>';return;}
     entries.forEach(function(e){
-      addRecordAndStock({date:date,dept:dept,item:e.it.name,qty:e.qty,by:by,note:note,ts:Date.now()},e.it);
+      addRecordAndStock({date:date,time:time,dept:dept,item:e.it.name,qty:e.qty,by:by,note:note,ts:Date.now()},e.it);
     });
     var total=entries.reduce(function(a,e){return a+e.qty;},0);
     $("distHint").innerHTML='<span style="color:var(--good)">נרשמו '+nf(entries.length)+' פריטים ('+nf(total)+' יח׳) ל'+esc(dept)+(by?(" · "+esc(by)):"")+'</span>';
@@ -1602,6 +1608,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
 
   // init date + first paint (works offline from baseline)
   $("dDate").value=new Date().toISOString().slice(0,10);
+  if($("dTime"))$("dTime").value=new Date().toTimeString().slice(0,5);
   loadLocal();
   renderAll();
 
@@ -1612,7 +1619,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     if(which==="items")SB.from("items").select("*").then(function(r){if(!(r&&r.data))return;
       if(r.data.length){state.items=r.data.map(function(x){return {_id:x.id,name:x.name,unit:x.unit,stock:+x.stock||0,cost:+x.cost||0};}).sort(function(a,b){return (a.name||"").localeCompare(b.name||"","he");});renderAll();}
       else if(!supaSeeded.items&&state.items&&state.items.length){supaSeeded.items=1;SB.from("items").upsert(state.items.map(function(i){return {id:i._id,name:i.name,unit:i.unit,stock:i.stock,cost:i.cost||0};})).then(function(){supaRefetch("items");});}});
-    else if(which==="records")SB.from("records").select("*").then(function(r){if(r&&r.data){state.records=r.data.map(function(x){return {_id:x.id,date:x.date,dept:x.dept,item:x.item,qty:+x.qty||0,by:x["by"]||"",note:x.note||""};});_supaLoaded=true;renderAll();setStatus("live");}});
+    else if(which==="records")SB.from("records").select("*").then(function(r){if(r&&r.data){state.records=r.data.map(function(x){return {_id:x.id,date:x.date,time:x.time||"",dept:x.dept,item:x.item,qty:+x.qty||0,by:x["by"]||"",note:x.note||""};});_supaLoaded=true;renderAll();setStatus("live");}});
     else if(which==="departments")SB.from("departments").select("*").then(function(r){if(!(r&&r.data))return;
       if(r.data.length){state.depts=r.data.map(function(x){return x.name;});renderAll();}
       else if(!supaSeeded.departments&&state.depts&&state.depts.length){supaSeeded.departments=1;SB.from("departments").upsert(state.depts.map(function(n){return {name:n};})).then(function(){supaRefetch("departments");});}});

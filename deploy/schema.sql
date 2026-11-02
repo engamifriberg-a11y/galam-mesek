@@ -14,7 +14,7 @@ create table if not exists departments  (name text primary key);
 create table if not exists distributors (name text primary key);
 
 create table if not exists records (
-  id text primary key, date text, dept text, item text,
+  id text primary key, date text, time text, dept text, item text,
   qty integer, "by" text, note text);
 
 create table if not exists air_conditioners (
