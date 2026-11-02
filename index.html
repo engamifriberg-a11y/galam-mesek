@@ -74,8 +74,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 .subrail{display:flex;gap:6px;overflow-x:auto;padding:4px 14px 12px;margin-bottom:6px;scroll-padding-inline:14px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none}
 .subrail::-webkit-scrollbar{display:none}
-.subtab{flex:none;background:var(--surface);border:1px solid var(--line);color:var(--muted);font-weight:600;font-size:.88rem;padding:7px 14px;border-radius:999px;white-space:nowrap;box-shadow:var(--shadow);transition:background .2s,color .2s}
-.subtab:hover{color:var(--ink)}
+.subtab{flex:none;background:color-mix(in srgb,var(--accent) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line));color:var(--accent);font-weight:700;font-size:.88rem;padding:7px 14px;border-radius:999px;white-space:nowrap;box-shadow:var(--shadow);transition:background .2s,color .2s}
+.subtab:hover{background:color-mix(in srgb,var(--accent) 16%,var(--surface))}
 .subtab[aria-selected="true"]{background:var(--accent);color:#fff;border-color:transparent}
 
 main{max-width:900px;margin:0 auto;padding-block:18px 40px}
