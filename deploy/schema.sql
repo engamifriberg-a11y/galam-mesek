@@ -36,7 +36,7 @@ create table if not exists doors (
 -- calls.num is an auto-incrementing service-ticket number
 create table if not exists calls (
   id text primary key, who text, kind text, loc text, status text,
-  cdate text, ctime text, descr text, ts bigint, num serial);
+  cdate text, ctime text, descr text, ts bigint, urgency smallint default 3, num serial);
 
 create table if not exists dishwashers (
   id text primary key, loc text, dept text);

@@ -798,9 +798,10 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       <h2>פתיחת קריאה</h2>
       <form id="callForm" class="form-grid">
         <div class="field"><label for="cWho">מי פתח את הקריאה</label><input type="text" id="cWho" list="cWhoList" placeholder="שם" required><datalist id="cWhoList"></datalist></div>
-        <div class="field"><label for="cKind">מה התקלקל</label><select id="cKind" class="selbox" style="max-width:none;width:100%"><option>מזגן</option><option>דלת</option><option>תמי4</option><option>מדיח כלים</option><option>כללי</option></select></div>
+        <div class="field"><label for="cKind">מה התקלקל</label><select id="cKind" class="selbox" style="max-width:none;width:100%"><option>מזגן</option><option>דלת</option><option>תמי4</option><option>מדיח כלים</option><option>כיבוד/חלב</option><option>כללי</option></select></div>
         <div class="field"><label for="cLoc">מיקום התקלה</label><input type="text" id="cLoc" placeholder="מיקום"></div>
         <div class="field"><label for="cStatus">סטטוס</label><select id="cStatus" class="selbox" style="max-width:none;width:100%"><option>חדש</option><option>בטיפול</option><option>טופל</option></select></div>
+        <div class="field"><label for="cUrg">דחיפות</label><select id="cUrg" class="selbox" style="max-width:none;width:100%"><option value="1">1 — דחוף מאוד</option><option value="2">2 — דחוף</option><option value="3" selected>3 — בינוני</option><option value="4">4 — נמוך</option><option value="5">5 — לא דחוף</option></select></div>
         <div class="field"><label for="cDate">תאריך</label><input type="date" id="cDate"></div>
         <div class="field"><label for="cTime">שעה</label><input type="time" id="cTime"></div>
         <div class="field wide"><label for="cDesc">תיאור התקלה</label><input type="text" id="cDesc" placeholder="מה קרה / פרטים"></div>
@@ -811,10 +812,10 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     <div class="toolbar">
       <input class="search" id="callSearch" placeholder="חיפוש מיקום / תיאור / מי פתח…">
       <select class="selbox" id="callStatusF"><option value="">כל הסטטוסים</option><option>חדש</option><option>בטיפול</option><option>טופל</option></select>
-      <select class="selbox" id="callKindF"><option value="">כל הסוגים</option><option>מזגן</option><option>דלת</option><option>תמי4</option><option>מדיח כלים</option><option>כללי</option></select>
+      <select class="selbox" id="callKindF"><option value="">כל הסוגים</option><option>מזגן</option><option>דלת</option><option>תמי4</option><option>מדיח כלים</option><option>כיבוד/חלב</option><option>כללי</option></select>
     </div>
     <div class="table-scroll">
-      <table><thead><tr><th>מס׳</th><th>תאריך</th><th>שעה</th><th>סוג</th><th>מיקום</th><th>מי פתח</th><th>תיאור</th><th>סטטוס</th><th></th></tr></thead>
+      <table><thead><tr><th>מס׳</th><th>תאריך</th><th>שעה</th><th>סוג</th><th>מיקום</th><th>מי פתח</th><th>תיאור</th><th>סטטוס</th><th>דחיפות</th><th></th></tr></thead>
       <tbody id="callsRows"></tbody></table>
     </div>
   </section>
@@ -1190,7 +1191,13 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
   function delAc(id){ if(SUPAMODE){ state.ac=state.ac.filter(function(a){return a._id!=id;}); renderAll(); SB.from("air_conditioners").delete().eq("num",id).then(function(){}); } else { state.ac=state.ac.filter(function(a){return a._id!=id;}); saveLocal(); renderAll(); } }
   function addDoor(obj){ if(SUPAMODE){ obj._id="dr"+Date.now(); state.doors.push(obj); renderAll(); SB.from("doors").insert({id:obj._id,num:obj.num,maker:obj.maker,supplier:obj.supplier,serial:obj.serial,loc:obj.loc,svc_phone:obj.svc_phone,contact:obj.contact,mgr_phone:obj.mgr_phone,email:obj.email,notes:obj.notes}).then(function(r){if(r&&r.error)toast("שמירה בענן נכשלה — ודא שהטבלה doors קיימת");}); } else { obj._id="dr"+Date.now(); state.doors.push(obj); saveLocal(); renderAll(); } }
   function delDoor(id){ if(SUPAMODE){ state.doors=state.doors.filter(function(d){return d._id!=id;}); renderAll(); SB.from("doors").delete().eq("id",id).then(function(){}); } else { state.doors=state.doors.filter(function(d){return d._id!=id;}); saveLocal(); renderAll(); } }
-  function addCall(obj){ if(SUPAMODE){ obj._id="c"+Date.now(); state.calls.push(obj); renderAll(); SB.from("calls").insert({id:obj._id,who:obj.who,kind:obj.kind,loc:obj.loc,status:obj.status,cdate:obj.cdate,ctime:obj.ctime,descr:obj.descr,ts:obj.ts}).select().then(function(r){if(r&&r.error){toast("שמירה בענן נכשלה — ודא שהטבלה calls קיימת");}else if(r&&r.data&&r.data[0]){var cc=state.calls.filter(function(x){return x._id==obj._id;})[0];if(cc){cc.num=r.data[0].num;renderAll();}}}); } else { obj._id="c"+Date.now(); state.calls.push(obj); saveLocal(); renderAll(); } }
+  function addCall(obj){ if(SUPAMODE){ obj._id="c"+Date.now(); state.calls.push(obj); renderAll();
+    var payload={id:obj._id,who:obj.who,kind:obj.kind,loc:obj.loc,status:obj.status,cdate:obj.cdate,ctime:obj.ctime,descr:obj.descr,urgency:(obj.urgency!=null?obj.urgency:3),ts:obj.ts};
+    function ins(p,again){ SB.from("calls").insert(p).select().then(function(r){
+      if(r&&r.error){ if(again&&/urgency/i.test((r.error.message||"")+(r.error.details||""))){ var p2={}; for(var k in p){ if(k!=="urgency")p2[k]=p[k]; } ins(p2,false); return; } toast("שמירה בענן נכשלה — ודא שהטבלה calls קיימת"); }
+      else if(r&&r.data&&r.data[0]){ var cc=state.calls.filter(function(x){return x._id==obj._id;})[0]; if(cc){cc.num=r.data[0].num;renderAll();} } }); }
+    ins(payload,true);
+  } else { obj._id="c"+Date.now(); state.calls.push(obj); saveLocal(); renderAll(); } }
   function updateCall(id,patch){ if(SUPAMODE){ var c=state.calls.filter(function(x){return x._id==id;})[0]; if(c){for(var k in patch)c[k]=patch[k];renderAll();} SB.from("calls").update(patch).eq("id",id).then(function(){}); } else { var c=state.calls.filter(function(x){return x._id==id;})[0]; if(c){for(var k in patch)c[k]=patch[k];saveLocal();renderAll();} } }
   function delCall(id){ if(SUPAMODE){ state.calls=state.calls.filter(function(x){return x._id!=id;}); renderAll(); SB.from("calls").delete().eq("id",id).then(function(){}); } else { state.calls=state.calls.filter(function(x){return x._id!=id;}); saveLocal(); renderAll(); } }
   function setBudget(y,amt){ state.budget[y]=amt; renderAll(); if(SUPAMODE){ SB.from("budgets").upsert({year:+y,amount:amt}).then(function(r){if(r&&r.error)toast("שמירת תקציב נכשלה — ודא שהטבלה budgets קיימת ב-Supabase");}); } else { saveLocal(); } }
@@ -1482,6 +1489,9 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     var col=c.status==="טופל"?"var(--good)":c.status==="בטיפול"?"var(--warn)":"var(--crit)";
     return '<select data-callstatus="'+esc(c._id)+'" style="border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--surface-2);color:'+col+';font-weight:700">'+opts.map(function(o){return '<option'+(o===c.status?" selected":"")+'>'+o+'</option>';}).join("")+'</select>';
   }
+  function urgText(u){u=+u||3;return ({1:"דחוף מאוד",2:"דחוף",3:"בינוני",4:"נמוך",5:"לא דחוף"})[u]||"בינוני";}
+  function urgColor(u){u=+u||3;return ({1:"#ff3b30",2:"#ff9500",3:"#ffcc00",4:"#34c759",5:"#8e8e93"})[u]||"#ffcc00";}
+  function urgBadge(u){u=+u||3;var c=urgColor(u);return '<span class="chip" style="background:'+c+'22;color:'+c+';border:1px solid '+c+'66;font-weight:800;white-space:nowrap">'+u+' · '+urgText(u)+'</span>';}
   function renderCalls(){
     var wl=$("cWhoList"); if(wl){wl.innerHTML=(state.distributors||[]).map(function(n){return '<option value="'+esc(n)+'">';}).join("");}
     var q=($("callSearch")?$("callSearch").value:"").trim(),sf=$("callStatusF")?$("callStatusF").value:"",kf=$("callKindF")?$("callKindF").value:"";
@@ -1493,16 +1503,16 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     var openN=(state.calls||[]).filter(function(c){return c.status!=="טופל";}).length;
     if($("callsSub"))$("callsSub").textContent="סה״כ "+nf((state.calls||[]).length)+" קריאות · "+nf(openN)+" פתוחות";
     var tb=$("callsRows"); if(!tb)return;
-    if(list.length===0){tb.innerHTML='<tr><td colspan="9" class="empty">אין קריאות</td></tr>';return;}
+    if(list.length===0){tb.innerHTML='<tr><td colspan="10" class="empty">אין קריאות</td></tr>';return;}
     tb.innerHTML=list.map(function(c){
-      return '<tr'+(isArmed("call",c._id)?' class="row-armed"':'')+'><td class="num" style="font-weight:700;color:var(--accent)">'+(c.num!=null?('#'+esc(c.num)):'—')+'</td><td class="num">'+esc(c.cdate||"")+'</td><td class="num">'+esc(c.ctime||"")+'</td><td><span class="chip">'+esc(c.kind||"")+'</span></td><td>'+esc(c.loc||"")+'</td><td>'+esc(c.who||"")+'</td><td style="max-width:240px">'+esc(c.descr||"")+'</td><td>'+callStatusSelect(c)+'</td><td>'+delBtn("call",c._id)+'</td></tr>';
+      return '<tr'+(isArmed("call",c._id)?' class="row-armed"':'')+'><td class="num" style="font-weight:700;color:var(--accent)">'+(c.num!=null?('#'+esc(c.num)):'—')+'</td><td class="num">'+esc(c.cdate||"")+'</td><td class="num">'+esc(c.ctime||"")+'</td><td><span class="chip">'+esc(c.kind||"")+'</span></td><td>'+esc(c.loc||"")+'</td><td>'+esc(c.who||"")+'</td><td style="max-width:240px">'+esc(c.descr||"")+'</td><td>'+callStatusSelect(c)+'</td><td>'+urgBadge(c.urgency)+'</td><td>'+delBtn("call",c._id)+'</td></tr>';
     }).join("");
   }
   (function(){ var n=new Date(); if($("cDate"))$("cDate").value=n.toISOString().slice(0,10); if($("cTime"))$("cTime").value=n.toTimeString().slice(0,5); })();
   if($("callForm"))$("callForm").addEventListener("submit",function(ev){ev.preventDefault();
     var who=($("cWho").value||"").trim(); if(!who){if($("callHint"))$("callHint").innerHTML='<span style="color:var(--crit)">יש לציין מי פתח.</span>';return;}
     var n=new Date();
-    addCall({who:who,kind:$("cKind").value,loc:($("cLoc").value||"").trim(),status:$("cStatus").value,cdate:$("cDate").value||n.toISOString().slice(0,10),ctime:$("cTime").value||n.toTimeString().slice(0,5),descr:($("cDesc").value||"").trim(),ts:Date.now()});
+    addCall({who:who,kind:$("cKind").value,loc:($("cLoc").value||"").trim(),status:$("cStatus").value,cdate:$("cDate").value||n.toISOString().slice(0,10),ctime:$("cTime").value||n.toTimeString().slice(0,5),descr:($("cDesc").value||"").trim(),urgency:+($("cUrg")?$("cUrg").value:3)||3,ts:Date.now()});
     if($("callHint"))$("callHint").innerHTML='<span style="color:var(--good)">הקריאה נפתחה ✓</span>';toast("הקריאה נפתחה ✓");
     this.reset(); var m=new Date(); $("cDate").value=m.toISOString().slice(0,10); $("cTime").value=m.toTimeString().slice(0,5);
   });
@@ -1600,7 +1610,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
     else if(which==="ac")SB.from("air_conditioners").select("*").then(function(r){if(!(r&&r.data))return;
       if(r.data.length){state.ac=r.data.map(function(x){return {_id:x.num,num:x.num,loc:x.loc,model:x.model,type:x.type};});renderAll();}
       else if(!supaSeeded.ac&&state.ac&&state.ac.length){supaSeeded.ac=1;SB.from("air_conditioners").upsert(state.ac.map(function(a){return {num:a.num,loc:a.loc,model:a.model,type:a.type};})).then(function(){supaRefetch("ac");});}});
-    else if(which==="calls")SB.from("calls").select("*").then(function(r){if(r&&r.data){state.calls=r.data.map(function(x){return {_id:x.id,who:x.who,kind:x.kind,loc:x.loc,status:x.status,cdate:x.cdate,ctime:x.ctime,descr:x.descr,ts:+x.ts||0,num:(x.num!=null?x.num:null)};});renderAll();}});
+    else if(which==="calls")SB.from("calls").select("*").then(function(r){if(r&&r.data){state.calls=r.data.map(function(x){return {_id:x.id,who:x.who,kind:x.kind,loc:x.loc,status:x.status,cdate:x.cdate,ctime:x.ctime,descr:x.descr,urgency:(x.urgency!=null?+x.urgency:3),ts:+x.ts||0,num:(x.num!=null?x.num:null)};});renderAll();}});
     else if(which==="budgets")SB.from("budgets").select("*").then(function(r){if(r&&r.data){var b={};r.data.forEach(function(x){b[x.year]=+x.amount||0;});state.budget=b;renderAll();}});
     else if(which==="doors")SB.from("doors").select("*").then(function(r){if(!(r&&r.data))return;
       if(r.data.length){state.doors=r.data.map(function(x){return {_id:x.id,num:x.num,maker:x.maker,supplier:x.supplier,serial:x.serial,loc:x.loc,svc_phone:x.svc_phone,contact:x.contact,mgr_phone:x.mgr_phone,email:x.email,notes:x.notes};});renderAll();}

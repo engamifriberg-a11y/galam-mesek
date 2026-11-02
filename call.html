@@ -37,6 +37,11 @@ textarea{min-height:92px;resize:vertical}
 .ticket{display:inline-block;background:var(--surface-2);border:1px dashed var(--accent);border-radius:14px;padding:12px 22px;margin:4px 0 18px}
 .ticket .l{font-size:.8rem;color:var(--muted);font-weight:700}
 .ticket .n{font-family:var(--fd);font-weight:800;font-size:1.9rem;color:var(--accent);line-height:1}
+.urg{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:4px}
+.u{padding:10px 3px;border:2px solid var(--line);border-radius:12px;background:var(--surface-2);text-align:center;font-weight:800;font-family:var(--fd);cursor:pointer;user-select:none;transition:.15s;font-size:1.05rem;line-height:1.15}
+.u .ul{display:block;font-size:.6rem;font-weight:700;color:var(--muted);margin-top:3px}
+.u.on{color:#fff;border-color:transparent}
+.u.on .ul{color:rgba(255,255,255,.9)}
 .hidden{display:none}
 .link{display:block;text-align:center;margin-top:16px;color:var(--accent);font-weight:700;text-decoration:none;cursor:pointer}
 .foot{color:var(--muted);font-size:.82rem;margin-top:22px;text-align:center}
@@ -69,6 +74,15 @@ textarea{min-height:92px;resize:vertical}
         <div class="kind" data-k="תמי4">💧 תמי4 / מים</div>
         <div class="kind" data-k="מדיח כלים">🍽️ מדיח כלים</div>
         <div class="kind" data-k="כללי">🔧 כללי</div>
+        <div class="kind" data-k="כיבוד/חלב">☕ כיבוד/חלב</div>
+      </div>
+      <label>דחיפות</label>
+      <div class="urg" id="urg">
+        <div class="u" data-u="1">1<span class="ul">דחוף מאוד</span></div>
+        <div class="u" data-u="2">2<span class="ul">דחוף</span></div>
+        <div class="u on" data-u="3">3<span class="ul">בינוני</span></div>
+        <div class="u" data-u="4">4<span class="ul">נמוך</span></div>
+        <div class="u" data-u="5">5<span class="ul">לא דחוף</span></div>
       </div>
       <label for="loc">מיקום התקלה</label>
       <input id="loc" type="text" placeholder="לדוגמה: חדר אוכל, מחלקה 700…">
@@ -115,7 +129,10 @@ textarea{min-height:92px;resize:vertical}
   var SUPA_KEY=window.SUPA_KEY||"";
   var SB=null; try{ SB=window.supabase.createClient(SUPA_URL,SUPA_KEY); }catch(e){ SB=null; }
   var $=function(id){return document.getElementById(id);};
-  var kind="מזגן", lastNum=null;
+  var kind="מזגן", lastNum=null, urg=3;
+  var URGC={1:"#ff3b30",2:"#ff9500",3:"#ffcc00",4:"#34c759",5:"#8e8e93"};
+  function urgTextCall(u){u=+u||3;return ({1:"דחוף מאוד",2:"דחוף",3:"בינוני",4:"נמוך",5:"לא דחוף"})[u]||"בינוני";}
+  function paintUrg(){Array.prototype.forEach.call(document.querySelectorAll(".u"),function(u){var v=+u.getAttribute("data-u");var on=(v===urg);u.classList.toggle("on",on);u.style.background=on?URGC[v]:"";});}
   function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
   function pad(n){return (n<10?"0":"")+n;}
   function show(id){["formCard","doneCard","trackCard"].forEach(function(x){$(x).classList.toggle("hidden",x!==id);});window.scrollTo(0,0);}
@@ -125,6 +142,8 @@ textarea{min-height:92px;resize:vertical}
     kind=el.getAttribute("data-k");
     Array.prototype.forEach.call(document.querySelectorAll(".kind"),function(k){k.classList.toggle("on",k===el);});
   });
+  $("urg").addEventListener("click",function(ev){var el=ev.target.closest(".u"); if(!el)return; urg=+el.getAttribute("data-u"); paintUrg();});
+  paintUrg();
 
   $("f").addEventListener("submit",function(ev){
     ev.preventDefault();
@@ -136,20 +155,22 @@ textarea{min-height:92px;resize:vertical}
       loc:($("loc").value||"").trim(), status:"חדש",
       cdate:now.getFullYear()+"-"+pad(now.getMonth()+1)+"-"+pad(now.getDate()),
       ctime:pad(now.getHours())+":"+pad(now.getMinutes()),
-      descr:($("desc").value||"").trim(), ts:Date.now() };
+      descr:($("desc").value||"").trim(), urgency:urg, ts:Date.now() };
     $("send").disabled=true; $("hint").className="hint"; $("hint").textContent="שולח…";
-    SB.from("calls").insert(rec).select().then(function(r){
+    function sendRec(p,again){ SB.from("calls").insert(p).select().then(function(r){
+      if(r&&r.error){ if(again&&/urgency/i.test((r.error.message||"")+(r.error.details||""))){ var p2={}; for(var k in p){ if(k!=="urgency")p2[k]=p[k]; } sendRec(p2,false); return; }
+        $("send").disabled=false; $("hint").className="hint err"; $("hint").textContent="שליחה נכשלה — נסו שוב"; return; }
       $("send").disabled=false;
-      if(r&&r.error){ $("hint").className="hint err"; $("hint").textContent="שליחה נכשלה — נסו שוב"; return; }
       lastNum=(r&&r.data&&r.data[0]&&r.data[0].num!=null)?r.data[0].num:null;
       $("doneNum").textContent=lastNum!=null?("#"+lastNum):"נשלחה";
-      $("hint").textContent=""; $("f").reset(); show("doneCard");
-    },function(){ $("send").disabled=false; $("hint").className="hint err"; $("hint").textContent="שליחה נכשלה — נסו שוב"; });
+      $("hint").textContent=""; $("f").reset(); urg=3; paintUrg(); show("doneCard");
+    },function(){ $("send").disabled=false; $("hint").className="hint err"; $("hint").textContent="שליחה נכשלה — נסו שוב"; }); }
+    sendRec(rec,true);
   });
 
   $("again").addEventListener("click",function(){
     kind="מזגן"; Array.prototype.forEach.call(document.querySelectorAll(".kind"),function(k){k.classList.toggle("on",k.getAttribute("data-k")==="מזגן");});
-    $("hint").textContent=""; show("formCard"); $("who").focus();
+    urg=3; paintUrg(); $("hint").textContent=""; show("formCard"); $("who").focus();
   });
   $("toTrack").addEventListener("click",function(){ $("tres").classList.add("hidden"); $("thint").textContent=""; show("trackCard"); });
   $("toForm").addEventListener("click",function(){ show("formCard"); });
@@ -180,6 +201,7 @@ textarea{min-height:92px;resize:vertical}
         '<div style="margin-top:12px">'+
         '<div class="row"><span class="k">מספר</span><span>#'+esc(c.num)+'</span></div>'+
         '<div class="row"><span class="k">סוג</span><span>'+esc(c.kind)+'</span></div>'+
+        '<div class="row"><span class="k">דחיפות</span><span style="font-weight:800;color:'+(URGC[+c.urgency||3])+'">'+(+c.urgency||3)+' · '+urgTextCall(c.urgency)+'</span></div>'+
         '<div class="row"><span class="k">מיקום</span><span>'+esc(c.loc||"—")+'</span></div>'+
         '<div class="row"><span class="k">נפתחה</span><span>'+esc(c.cdate)+' '+esc(c.ctime)+'</span></div>'+
         '<div class="row"><span class="k">נפתח ע״י</span><span>'+esc(c.who||"—")+'</span></div>'+
