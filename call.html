@@ -34,10 +34,10 @@ textarea{min-height:92px;resize:vertical}
 .btn:active{transform:translateY(1px)}
 .btn[disabled]{opacity:.6;cursor:default}
 .btn.sec{background:var(--surface-2);color:var(--accent);box-shadow:none;border:1px solid var(--line)}
-.install{width:100%;max-width:560px;margin:0 0 4px}
-.install .btn{margin-top:0}
-.install-cta{background:linear-gradient(135deg,#e53935,#c62828);color:#fff;box-shadow:0 6px 16px rgba(198,40,40,.28);border:none}
-.install-help{text-align:center;color:var(--muted);font-size:.86rem;margin-top:8px;line-height:1.5}
+.install{width:100%;max-width:560px;margin:0 0 6px;text-align:center}
+.install-mini{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid #c62828;background:color-mix(in srgb,#c62828 10%,var(--surface));color:#c62828;font-weight:800;font-size:.9rem;font-family:var(--fd);cursor:pointer}
+.install-mini:active{transform:translateY(1px)}
+.install-help{margin-top:10px;padding:12px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;color:var(--ink);font-size:.9rem;line-height:1.6;text-align:right}
 .hint{min-height:20px;margin-top:12px;text-align:center;font-weight:600}
 .ok{color:var(--good)}.err{color:var(--crit)}
 .done{text-align:center;padding:12px 8px}
@@ -74,8 +74,8 @@ textarea{min-height:92px;resize:vertical}
 
   <!-- INSTALL -->
   <div class="install" id="installBar">
-    <button class="btn install-cta" id="installBtn" type="button">📲 התקנת האפליקציה — שירות משק</button>
-    <div class="install-help" id="installHelp"></div>
+    <button class="install-mini" id="installBtn" type="button">📲 התקנת האפליקציה</button>
+    <div class="install-help" id="installHelp" hidden></div>
   </div>
 
   <!-- FORM -->
@@ -233,14 +233,17 @@ textarea{min-height:92px;resize:vertical}
   if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
   var deferredPrompt=null, installBtn=$("installBtn"), installHelp=$("installHelp"), installBar=$("installBar");
   function isStandalone(){ try{return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;}catch(e){return false;} }
-  function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent||""); }
   if(isStandalone()&&installBar){ installBar.style.display="none"; }
   window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); deferredPrompt=e; });
-  window.addEventListener("appinstalled",function(){ if(installHelp)installHelp.textContent="האפליקציה הותקנה ✓"; if(installBtn)installBtn.style.display="none"; });
+  window.addEventListener("appinstalled",function(){ if(installBar)installBar.style.display="none"; });
+  function howTo(){ var ua=navigator.userAgent||"";
+    if(/iphone|ipad|ipod/i.test(ua)) return "ב-<b>iPhone/iPad</b> (Safari): הקישו על <b>שיתוף</b> ↑ בתחתית, גללו ובחרו <b>הוסף למסך הבית</b>.";
+    if(/android/i.test(ua)) return "ב-<b>אנדרואיד</b> (Chrome): הקישו על תפריט <b>⋮</b> למעלה ובחרו <b>התקנת אפליקציה</b> / <b>הוספה למסך הבית</b>.";
+    return "ב-<b>מחשב</b> (Chrome/Edge): לחצו על אייקון ההתקנה בשורת הכתובת (⊕ / מסך עם חץ), או תפריט <b>⋮</b> ← <b>התקנת אפליקציה / Install app</b>.";
+  }
   if(installBtn)installBtn.addEventListener("click",function(){
-    if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(function(){ deferredPrompt=null; }); }
-    else if(isIOS()){ installHelp.innerHTML="להתקנה ב-iPhone: לחצו על <b>שיתוף</b> ↑ ואז על <b>הוסף למסך הבית</b>."; }
-    else { installHelp.innerHTML="בתפריט הדפדפן (⋮) בחרו <b>התקן אפליקציה</b> / <b>Add to Home screen</b>."; }
+    if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(function(c){ if(c&&c.outcome==="accepted"&&installBar)installBar.style.display="none"; deferredPrompt=null; }); return; }
+    if(installHelp){ installHelp.innerHTML=howTo(); installHelp.hidden=false; }
   });
 })();
 </script>
