@@ -1729,8 +1729,8 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
       return {file:"פריטים",sheets:[{name:"פריטים",aoa:rows2}]};
     }
     if(view==="stock"){
-      var rows3=[["פריט","מלאי","יחידה","סטטוס"]];
-      state.items.slice().sort(function(a,b){return a.stock-b.stock;}).forEach(function(i){rows3.push([i.name,i.stock,i.unit||"",stockStatus(i.stock)[1]]);});
+      var rows3=[["פריט","מק\"ט","מלאי","יחידה","סטטוס","עלות ₪ ליח׳","מלאי מינימום","המלצת הצטיידות"]];
+      state.items.slice().sort(function(a,b){return a.stock-b.stock;}).forEach(function(i){var mn=+i.min||0,need=mn-(+i.stock||0);var rec=mn<=0?"—":(need>0?("להזמין "+need+" "+(i.unit||"")).trim():"תקין");rows3.push([i.name,i.sku||"",i.stock,i.unit||"",stockStatus(i.stock)[1],+i.cost||0,mn,rec]);});
       return {file:"מלאי",sheets:[{name:"מלאי",aoa:rows3}]};
     }
     if(view==="depts"){
