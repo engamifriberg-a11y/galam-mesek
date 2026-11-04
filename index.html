@@ -211,6 +211,14 @@ td.num{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
 .ac-phone:hover{background:rgba(255,255,255,.18)}
 .ac-phone .r{font-size:.78rem;color:#b9c4d4;font-weight:600}
 .ac-phone .n{font-family:var(--font-display);font-weight:800;font-size:1.35rem;letter-spacing:.01em;font-variant-numeric:tabular-nums;direction:ltr;text-align:right}
+.ac-group{margin-top:12px}
+.ac-gl{font-weight:800;font-size:.92rem;margin-bottom:8px}
+.ac-g1 .ac-gl{color:#bff2cf}
+.ac-g2 .ac-gl{color:#ffd9a0}
+.ac-g1 .ac-phone{background:rgba(52,199,89,.20);border-color:rgba(52,199,89,.5)}
+.ac-g1 .ac-phone .r{color:#d6f3d9}
+.ac-g2 .ac-phone{background:rgba(255,159,10,.18);border-color:rgba(255,159,10,.5)}
+.ac-g2 .ac-phone .r{color:#f3dcb8}
 
 .mnav{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:18px}
 .mnav .navbtn{width:36px;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--accent);font-size:1.3rem;line-height:1;font-weight:700;box-shadow:var(--shadow);display:grid;place-items:center}
@@ -747,13 +755,21 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;padding-block:6px 2
   <section id="main-ac" hidden>
     <div class="ac-contacts">
       <div class="ac-ch">☎ פתיחת קריאת שירות</div>
-      <div class="ac-phones">
-        <a class="ac-phone" href="tel:048422020"><span class="r">טלפון ראשי</span><span class="n">04-842-2020</span></a>
-        <a class="ac-phone" href="tel:0528796258"><span class="r">עדי — מנהל שירות</span><span class="n">052-879-6258</span></a>
-        <a class="ac-phone" href="tel:0523049696"><span class="r">חיים — מכירות חדשים</span><span class="n">052-304-9696</span></a>
-        <a class="ac-phone" href="tel:0733200559"><span class="r">שירות יטאות</span><span class="n">073-320-0559</span></a>
-        <a class="ac-phone" href="tel:0526663868"><span class="r">גיל — מנהל שירות</span><span class="n">052-666-3868</span></a>
-        <a class="ac-phone" href="tel:0502161879"><span class="r">וובה — איש השירות</span><span class="n">050-216-1879</span></a>
+      <div class="ac-group ac-g1">
+        <div class="ac-gl">🟢 יטאות</div>
+        <div class="ac-phones">
+          <a class="ac-phone" href="tel:0733200559"><span class="r">שירות יטאות</span><span class="n">073-320-0559</span></a>
+          <a class="ac-phone" href="tel:0526663868"><span class="r">גיל — מנהל שירות</span><span class="n">052-666-3868</span></a>
+          <a class="ac-phone" href="tel:0502161879"><span class="r">וובה — איש השירות</span><span class="n">050-216-1879</span></a>
+        </div>
+      </div>
+      <div class="ac-group ac-g2">
+        <div class="ac-gl">🟠 מזגנים</div>
+        <div class="ac-phones">
+          <a class="ac-phone" href="tel:048422020"><span class="r">טלפון ראשי</span><span class="n">04-842-2020</span></a>
+          <a class="ac-phone" href="tel:0528796258"><span class="r">עדי — מנהל שירות</span><span class="n">052-879-6258</span></a>
+          <a class="ac-phone" href="tel:0523049696"><span class="r">חיים — מכירות חדשים</span><span class="n">052-304-9696</span></a>
+        </div>
       </div>
     </div>
     <h1 class="view-title">מזגנים</h1>
